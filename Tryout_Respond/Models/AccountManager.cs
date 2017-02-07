@@ -15,16 +15,20 @@ namespace Tryout_Respond.Models
             connection = new DatabaseConnection();
         }
 
-        public bool LogIn(string username, string password)
+        public string Authenticate(string username, string password)
         {
-            List<object[]> result = connection.RunQuery("SELECT * FROM Accounts WHERE username = '" + username + "' AND password = '" + password + "'");
+            List<object[]> result = connection.RunQuery("SELECT * FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
 
-            if (result.Count > 0)
+            int userID = -1;
+
+            string token = "";
+
+            foreach (object[] value in result)
             {
-                return true;
+                token = value[1].ToString() + "|" + DateTime.UtcNow.ToString();
             }
 
-            return false;
+            return token;
         }
     }
 }

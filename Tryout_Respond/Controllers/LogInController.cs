@@ -10,12 +10,19 @@ namespace Tryout_Respond.Controllers
 {
     public class LogInController : ApiController
     {
-        public bool Get()
+        public HttpResponseMessage Get()
         {
             string username = "milton2";
             string password = "tilburg";
 
-            return (new AccountManager()).LogIn(username, password);
+            string token = (new AccountManager()).Authenticate(username, password);
+
+            if(token == "")
+            {
+                return new HttpResponseMessage(HttpStatusCode.Forbidden);
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, token);
         }
     }
 }
