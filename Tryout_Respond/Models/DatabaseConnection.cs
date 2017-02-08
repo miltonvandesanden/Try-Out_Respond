@@ -9,51 +9,17 @@ namespace Tryout_Respond
     public class DatabaseConnection
     {
         private SqlConnection connection;
+        public static string CONNECTIONSTRING = "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
 
         public DatabaseConnection()
         {
-            connection = new SqlConnection(GetConnectionString());
+            connection = new SqlConnection(CONNECTIONSTRING);
         }
 
-        static private string GetConnectionString()
+        public bool RunNonQuery(string query)
         {
-            return "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
-        }
+            bool success = false;
 
-        /*private string CreateSelectQuery(string column, string table)
-        {
-            return "SELECT " + column + " FROM " + table;
-        }
-
-        private string CreateSelectQuery(string[] columns, string table)
-        {
-            String query = "SELECT ";
-
-            foreach (string column in columns)
-            {
-                query += column;
-
-                if (column != columns[columns.Count() - 1])
-                {
-                    query += ", ";
-                }
-            }
-
-            return query += " FROM " + table;
-        }
-
-        private string AddWhereClausToQuery(string valueToCompare, string comparator, string requiredValue, string query)
-        {
-            if (comparator != "=" && comparator != "!=" && comparator != "<" && comparator != ">" && comparator != "<=" && comparator != ">=")
-            {
-                throw new ArgumentException("operator: " + comparator + "is not a valid operator");
-            }
-
-            return query += " WHERE " + valueToCompare + " " + comparator + " " + requiredValue;
-        }*/
-
-        public void RunNonQuery(string query)
-        {
             connection.Open();
 
             SqlCommand command = connection.CreateCommand();
@@ -67,7 +33,11 @@ namespace Tryout_Respond
             try
             {
                 command.CommandText = query;
-                command.ExecuteNonQuery();
+
+                if (command.ExecuteNonQuery() > 0)
+                {
+                    success = true;
+                }
 
                 transaction.Commit();
                 Console.WriteLine("query: " + query + "succesfully executed");
@@ -84,9 +54,13 @@ namespace Tryout_Respond
                 {
                     Console.WriteLine("failed to rollback");
                 }
+
+                success = false;
             }
 
             connection.Close();
+
+            return success;
         }
 
         public List<object[]> RunQuery(string query)
