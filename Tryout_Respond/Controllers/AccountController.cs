@@ -12,18 +12,20 @@ namespace Tryout_Respond.Controllers
     [RoutePrefix("api/account")]
     public class AccountController : ApiController
     {
+        private const string authorizationType = "Basic";
+
         [HttpPost]
         [Route("auth")]
         public HttpResponseMessage Auth()
         {
             if(Request.Headers.Authorization != null)
             {
-                if(Request.Headers.Authorization.Parameter.StartsWith("Basic"))
+                if(Request.Headers.Authorization.Scheme == authorizationType)
                 {
-                    string encodedUsernamePassword = Request.Headers.Authorization.Parameter.Substring("Basic".Length).Trim(); 
+                    string encodedUsernamePassword = Request.Headers.Authorization.Parameter; 
 
-                    Encoding encoding = Encoding.GetEncoding("iso-859-1");
-                    string usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+                    //Encoding encoding = Encoding.GetEncoding("iso-859-1");
+                    string usernamePassword = Encoding.UTF8.GetString(Convert.FromBase64String(encodedUsernamePassword));
 
                     int seperatorIndex = usernamePassword.IndexOf(":");
 
@@ -35,6 +37,10 @@ namespace Tryout_Respond.Controllers
                     if(token == "")
                     {
                         return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    }
+                    else
+                    {
+                        return Request.CreateResponse(HttpStatusCode.OK, token);
                     }
                 }
                 else
@@ -69,7 +75,7 @@ namespace Tryout_Respond.Controllers
 
                 if (password == "")
                 {
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, "username in use");
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "invalid credentials");
                 }
 
                 return Request.CreateResponse(HttpStatusCode.OK, password);

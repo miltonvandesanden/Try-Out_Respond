@@ -10,24 +10,32 @@ namespace Tryout_Respond.Models
     public class AccountManager
     {
         public const int MINIMALPASSWORDLENGTH = 8;
-        public const string AVAILABLEPASSWORDCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        public const int TOKENLIFETIME = 20; //minutes
 
         DatabaseConnection connection = new DatabaseConnection();
 
         public string Authenticate(string username, string password)
         {
-            if(username.Any(ch => !Char.IsLetterOrDigit(ch)) || password.Any(ch => !Char.IsLetterOrDigit(ch)))
+            string token = "";
+            if(username.Any(character => !Char.IsLetterOrDigit(character)) || password.Any(ch => !Char.IsLetterOrDigit(ch)))
             {
-                return "";
+                return token;
             }
 
-            List<object[]> result = connection.RunQuery("SELECT * FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
+            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
 
-            string token = "";
-
-            foreach (object[] value in result)
+            if (results.Any())
             {
-                token = value[1].ToString() + "|" + DateTime.UtcNow.ToString();
+                token = Guid.NewGuid().ToString();
+                string expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
+                if (connection.RunNonQuery("UPDATE Users SET token='" + token + "', token_expirationDate='" + expirationDate + "' WHERE username = '" + username + "'"))
+                {
+                    return token;
+                }
+                else
+                {
+                    token = "";
+                }
             }
 
             return token;
@@ -35,43 +43,32 @@ namespace Tryout_Respond.Models
 
         public string Register(string username)
         {
-            if (username.Any(ch => !Char.IsLetterOrDigit(ch)))
+            string password = "";
+            if (username.Any(character => !Char.IsLetterOrDigit(character)))
             {
-                return "";
+                return password;
             }
 
             if (!AccountExists(username))
             {
-                string password = GeneratePassword();
+                password = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
 
                 if (connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + password + "')"))
                 {
                     return password;
                 }
 
-                return "";
+                return password = "";
             }
 
-            return "";
+            return password;
         }
 
         private bool AccountExists(string username)
         {
-            List<object[]> result = connection.RunQuery("SELECT * FROM Users WHERE username = '" + username + "'");
+            IList<object[]> result = connection.RunQuery("SELECT * FROM Users WHERE username = '" + username + "'");
 
             return result.Count > 0;
-        }
-
-        private string GeneratePassword()
-        {
-            char[] stringChars = new char[MINIMALPASSWORDLENGTH];
-
-            for(int i = 0; i < stringChars.Length; i++)
-            {
-                stringChars[i] = AVAILABLEPASSWORDCHARS[SecureRandom.Next(0, AVAILABLEPASSWORDCHARS.Length)];
-            }
-
-            return new String(stringChars);
         }
     }
 }

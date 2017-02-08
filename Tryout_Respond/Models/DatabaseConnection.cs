@@ -63,7 +63,7 @@ namespace Tryout_Respond
             return success;
         }
 
-        public List<object[]> RunQuery(string query)
+        public IList<object[]> RunQuery(string query)
         {
             connection.Open();
 
