@@ -9,79 +9,126 @@ using Tryout_Respond.Models;
 
 namespace Tryout_Respond.Controllers
 {
-    [RoutePrefix("api/account")]
+    [RoutePrefix("api/accounts")]
     public class AccountController : ApiController
     {
         private const string authorizationType = "Basic";
+        private AccountManager accountManager = new AccountManager();
 
         [HttpPost]
         [Route("auth")]
         public HttpResponseMessage Auth()
         {
-            if(Request.Headers.Authorization != null)
-            {
-                if(Request.Headers.Authorization.Scheme == authorizationType)
-                {
-                    string encodedUsernamePassword = Request.Headers.Authorization.Parameter; 
-
-                    //Encoding encoding = Encoding.GetEncoding("iso-859-1");
-                    string usernamePassword = Encoding.UTF8.GetString(Convert.FromBase64String(encodedUsernamePassword));
-
-                    int seperatorIndex = usernamePassword.IndexOf(":");
-
-                    string username = usernamePassword.Substring(0, seperatorIndex);
-                    string password = usernamePassword.Substring(seperatorIndex + 1);
-
-                    string token = (new AccountManager()).Authenticate(username, password);
-
-                    if(token == "")
-                    {
-                        return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
-                    }
-                    else
-                    {
-                        return Request.CreateResponse(HttpStatusCode.OK, token);
-                    }
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "Authorization invalid");
-                }
-            }
-            else
+            if(Request.Headers.Authorization == null)
             {
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "Authorization invalid");
             }
 
-            /*string token = (new AccountManager()).Authenticate(username, password);
-
-            if(token == "")
+            if (!Request.Headers.Authorization.Scheme.Equals(authorizationType))
             {
-                return new HttpResponseMessage(HttpStatusCode.Forbidden);
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "Authorization invalid");
             }
 
-            return Request.CreateResponse(HttpStatusCode.OK, token);*/
+            string encodedUsernamePassword = Request.Headers.Authorization.Parameter;
+
+            var usernamePassword = Encoding.UTF8.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+            var seperatorIndex = usernamePassword.IndexOf(":");
+
+            var username = usernamePassword.Substring(0, seperatorIndex);
+            var password = usernamePassword.Substring(seperatorIndex + 1);
+
+            string token = accountManager.Authenticate(username, password);
+
+            if (String.IsNullOrWhiteSpace(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, token);
         }
 
         [HttpPost]
         [Route("register")]
         public HttpResponseMessage Register()
         {
-            if(Request.Headers.GetValues("username").Count() > 0)
+            if(!Request.Headers.GetValues("username").Any())
             {
-                string username = Request.Headers.GetValues("username").First();
-
-                string password = (new AccountManager()).Register(username);
-
-                if (password == "")
-                {
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, "invalid credentials");
-                }
-
-                return Request.CreateResponse(HttpStatusCode.OK, password);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "credentials invalid");
             }
 
-            return Request.CreateResponse(HttpStatusCode.BadRequest, "credentials invalid");
+            string username = Request.Headers.GetValues("username").SingleOrDefault();
+
+            string password = (new AccountManager()).Register(username);
+
+            if (String.IsNullOrWhiteSpace(password))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "invalid credentials");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, password);
+        }
+
+        [HttpPost]
+        [Route("refreshToken")]
+        public HttpResponseMessage RefreshToken()
+        {
+            if(!Request.Headers.GetValues("token").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string oldToken = Request.Headers.GetValues("token").SingleOrDefault();
+
+            if(String.IsNullOrWhiteSpace(oldToken))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if(!accountManager.isTokenValid(oldToken))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            String newToken = accountManager.RefreshToken(oldToken);
+
+            if(String.IsNullOrWhiteSpace(newToken))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, newToken);
+        }
+
+        [HttpPost]
+        [Route("ownAccount")]
+        public HttpResponseMessage GetOwnAccountInfo()
+        {
+            if(!Request.Headers.GetValues("token").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").SingleOrDefault();
+
+            if(String.IsNullOrWhiteSpace(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if(!accountManager.isTokenValid(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string ownAccountInfo = accountManager.GetOwnAccountInfo(token);
+
+            if(String.IsNullOrWhiteSpace(ownAccountInfo))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, ownAccountInfo);
         }
     }
 }

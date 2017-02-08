@@ -16,49 +16,51 @@ namespace Tryout_Respond.Models
 
         public string Authenticate(string username, string password)
         {
-            string token = "";
-            if(username.Any(character => !Char.IsLetterOrDigit(character)) || password.Any(ch => !Char.IsLetterOrDigit(ch)))
+            var token = String.Empty;
+
+            if(username.Any(character => !Char.IsLetterOrDigit(character)) || password.Any(character => !Char.IsLetterOrDigit(character)))
             {
                 return token;
             }
 
             IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
 
-            if (results.Any())
+            if (!results.Any())
             {
-                token = Guid.NewGuid().ToString();
-                string expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
-                if (connection.RunNonQuery("UPDATE Users SET token='" + token + "', token_expirationDate='" + expirationDate + "' WHERE username = '" + username + "'"))
-                {
-                    return token;
-                }
-                else
-                {
-                    token = "";
-                }
+                return token;
+            }
+
+            token = Guid.NewGuid().ToString();
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
+
+            if (!connection.RunNonQuery("UPDATE Users SET token='" + token + "', token_expirationDate='" + expirationDate + "' WHERE username = '" + username + "'"))
+            {
+                return token = String.Empty;
             }
 
             return token;
+
         }
 
         public string Register(string username)
         {
-            string password = "";
+            var password = String.Empty;
+
             if (username.Any(character => !Char.IsLetterOrDigit(character)))
             {
                 return password;
             }
 
-            if (!AccountExists(username))
+            if (AccountExists(username))
             {
-                password = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
+                return password;
+            }
 
-                if (connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + password + "')"))
-                {
-                    return password;
-                }
+            password = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
 
-                return password = "";
+            if (!connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + password + "')"))
+            {
+                return password = String.Empty;
             }
 
             return password;
@@ -66,9 +68,43 @@ namespace Tryout_Respond.Models
 
         private bool AccountExists(string username)
         {
-            IList<object[]> result = connection.RunQuery("SELECT * FROM Users WHERE username = '" + username + "'");
+            IList<object[]> result = connection.RunQuery("SELECT userID FROM Users WHERE username = '" + username + "'");
 
-            return result.Count > 0;
+            return result.Any();
+        }
+
+        public bool isTokenValid(string token)
+        {
+            IList<object[]> results = connection.RunQuery("SELECT token FROM Users WHERE token = '" + token + "' AND token_expirationDate > '" + DateTime.UtcNow.ToString("yyyyMMdd HH: MM:ss") + "'");
+
+            return results.Any();
+        }
+
+        public String GetOwnAccountInfo(string token)
+        {
+            var accountInfo = String.Empty;
+
+            IList<object[]> results = connection.RunQuery("SELECT username, password FROM Users WHERE token = '" + token + "'");
+
+            foreach (object accountField in results.First())
+            {
+                accountInfo += accountField + ":";
+            }
+
+            return accountInfo;
+        }
+
+        public String RefreshToken(string oldToken)
+        {
+            var newToken = Guid.NewGuid().ToString();
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
+
+            if (!connection.RunNonQuery("UPDATE Users SET token='" + newToken + "', token_expirationDate='" + expirationDate + "' WHERE token = '" + oldToken + "'"))
+            {
+                return newToken = String.Empty;
+            }
+
+            return newToken;
         }
     }
 }

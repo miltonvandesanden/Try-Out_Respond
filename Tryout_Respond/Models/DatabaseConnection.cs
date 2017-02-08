@@ -18,7 +18,7 @@ namespace Tryout_Respond
 
         public bool RunNonQuery(string query)
         {
-            bool success = false;
+            var success = false;
 
             connection.Open();
 
@@ -42,15 +42,16 @@ namespace Tryout_Respond
                 transaction.Commit();
                 Console.WriteLine("query: " + query + "succesfully executed");
             }
-            catch(Exception ex)
+            catch(Exception queryExecutionException)
             {
+                Console.WriteLine(queryExecutionException.InnerException);
                 Console.WriteLine("failed to execute query: " + query);
 
                 try
                 {
                     transaction.Rollback();
                 }
-                catch (Exception ex2)
+                catch (Exception rollbackException)
                 {
                     Console.WriteLine("failed to rollback");
                 }
@@ -67,7 +68,7 @@ namespace Tryout_Respond
         {
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            var command = connection.CreateCommand();
             SqlTransaction transaction;
 
             transaction = connection.BeginTransaction();
@@ -75,16 +76,16 @@ namespace Tryout_Respond
             command.Connection = connection;
             command.Transaction = transaction;
 
-            List<object[]> result = new List<object[]>();
+            var result = new List<object[]>();
 
             try
             {
                 command.CommandText = query;
-                SqlDataReader reader = command.ExecuteReader();
+                var reader = command.ExecuteReader();
 
                 while(reader.Read())
                 {
-                    object[] row = new object[reader.FieldCount];
+                    var row = new object[reader.FieldCount];
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
