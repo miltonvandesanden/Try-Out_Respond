@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
@@ -17,36 +18,34 @@ namespace Tryout_Respond
             sqlConnection = new SqlConnection(CONNECTIONSTRING);
         }
 
-        public bool RunNonQuery(string query)
+        public bool RunNonQuery(SqlCommand sqlCommand)
         {
             var success = false;
 
-            sqlConnection.Open();
-
-            SqlCommand command = sqlConnection.CreateCommand();
+            //SqlCommand command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
             transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = sqlConnection;
-            command.Transaction = transaction;
+            sqlCommand.Connection = sqlConnection;
+            sqlCommand.Transaction = transaction;
 
             try
             {
-                command.CommandText = query;
+                //command.CommandText = query;
 
-                if (command.ExecuteNonQuery() > 0)
+                if (sqlCommand.ExecuteNonQuery() > 0)
                 {
                     success = true;
                 }
 
                 transaction.Commit();
-                Console.WriteLine("query: " + query + "succesfully executed");
+                Console.WriteLine("query: " + sqlCommand.ToString() + "succesfully executed");
             }
             catch(Exception queryExecutionException)
             {
                 Console.WriteLine(queryExecutionException.InnerException);
-                Console.WriteLine("failed to execute query: " + query);
+                Console.WriteLine("failed to execute query: " + sqlCommand.ToString());
 
                 try
                 {
@@ -60,29 +59,24 @@ namespace Tryout_Respond
                 success = false;
             }
 
-            sqlConnection.Close();
-
             return success;
         }
 
-        public IList<object[]> RunQuery(string query)
+        public IList<object[]> RunQuery(SqlCommand sqlCommand)
         {
-            sqlConnection.Open();
-
-            var command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
             transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = sqlConnection;
-            command.Transaction = transaction;
+            sqlCommand.Connection = sqlConnection;
+            sqlCommand.Transaction = transaction;
 
             var result = new List<object[]>();
 
             try
             {
-                command.CommandText = query;
-                var reader = command.ExecuteReader();
+                //command.CommandText = query;
+                var reader = sqlCommand.ExecuteReader();
 
                 while(reader.Read())
                 {
@@ -99,11 +93,11 @@ namespace Tryout_Respond
                 reader.Close();
 
                 transaction.Commit();
-                Console.WriteLine("query: " + query + "succesfully executed");
+                Console.WriteLine("query: " + sqlCommand.ToString() + "succesfully executed");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("failed to execute query: " + query);
+                Console.WriteLine("failed to execute query: " + sqlCommand.ToString());
 
                 try
                 {
@@ -115,9 +109,322 @@ namespace Tryout_Respond
                 }
             }
 
-            sqlConnection.Close();
-
             return result;
+        }
+
+        public bool IsAccountOwner(string username, string passwordHash)
+        {
+            var isAccountOwner = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username AND passwordHash=@passwordHash", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                isAccountOwner = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return isAccountOwner;
+            }
+            catch(Exception exception)
+            {
+                return isAccountOwner = false;
+            }
+        }
+
+        public bool IsAccountOwnerByToken(string userID, string token)
+        {
+            var isAccountOwner = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID AND token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                isAccountOwner = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return isAccountOwner;
+            }
+            catch(Exception exception)
+            {
+                return isAccountOwner = false;
+            }
+        }
+
+        public string GetUserID(string username)
+        {
+            var userID = String.Empty;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                userID = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
+
+                sqlConnection.Close();
+
+                return userID;
+            }
+            catch(Exception exception)
+            {
+                return userID = String.Empty;
+            }
+        }
+
+        public string GetUsername(string userID)
+        {
+            var username = String.Empty;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT username FROM Users WHERE userID=@userID", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Prepare();
+
+                username = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
+
+                sqlConnection.Close();
+
+                return username;
+            }
+            catch(Exception exception)
+            {
+                return username = String.Empty;
+            }
+
+        }
+
+
+        public bool AccountExistsUserID(string userID)
+        {
+            var accountExists = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Prepare();
+
+                accountExists = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return accountExists;
+            }
+            catch(Exception exception)
+            {
+                return accountExists = false;
+            }
+        }
+
+        public bool AccountExistsUsername(string username)
+        {
+            var accountExists = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 30;
+                sqlCommand.Prepare();
+
+                accountExists = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return accountExists;
+            }
+            catch (Exception exception)
+            {
+                return accountExists = false;
+            }
+        }
+
+        public bool SetToken(string token, DateTime expirationDate, string username)
+        {
+            var successfull = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET token=@token, token_expirationDate=@expirationDate WHERE username=@username", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@expirationDate", expirationDate);
+                sqlCommand.Parameters["@expirationDate"].DbType = DbType.DateTime;
+                sqlCommand.Parameters["@expirationDate"].Size = 8;
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                successfull = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return successfull;
+            }
+            catch(Exception exception)
+            {
+                return successfull = false;
+            }
+        }
+
+        public bool RefreshToken(string oldToken, string newToken, DateTime expirationDate)
+        {
+            var successfull = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET token=@newToken, token_expirationDate=@expirationDate WHERE token=@oldToken", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@newToken", newToken);
+                sqlCommand.Parameters["@newToken"].DbType = DbType.String;
+                sqlCommand.Parameters["@newToken"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@expirationDate", expirationDate);
+                sqlCommand.Parameters["@expirationDate"].DbType = DbType.DateTime;
+                sqlCommand.Parameters["@expirationDate"].Size = 8;
+                sqlCommand.Parameters.AddWithValue("@oldToken", oldToken);
+                sqlCommand.Parameters["@oldToken"].DbType = DbType.String;
+                sqlCommand.Parameters["@oldToken"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                successfull = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return successfull;
+            }
+            catch(Exception exception)
+            {
+                return successfull = false;
+            }
+        }
+
+        public bool InsertUser(string userID, string username, string passwordHash)
+        {
+            var successfull = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("INSERT INTO Users(userID, username, passwordHash) VALUES(@userID, @username, @passwordHash)", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                successfull = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return successfull;
+            }
+            catch(Exception exception)
+            {
+                return successfull = false;
+            }
+        }
+
+        public bool IsTokenValid(string token)
+        {
+            var isValid = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT token FROM Users WHERE token=@token AND token_ExpirationDate>@currentDate", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@currentDate", DateTime.UtcNow/*.ToString("yyyyMMdd HH:mm")*/);
+                sqlCommand.Parameters["@currentDate"].DbType = DbType.DateTime;
+                sqlCommand.Parameters["@currentDate"].Size = 8;
+                sqlCommand.Prepare();
+
+                isValid = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return isValid;
+            }
+            catch (Exception exception)
+            {
+                return isValid = false;
+            }
+        }
+
+        public string GetPasswordByUserID(string userID)
+        {
+            var password = String.Empty;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT passwordHash FROM Users WHERE userID=@userID", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Prepare();
+
+                password = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
+
+                sqlConnection.Close();
+
+                return password;
+            }
+            catch(Exception exception)
+            {
+                return password = String.Empty;
+            }
         }
     }
 }

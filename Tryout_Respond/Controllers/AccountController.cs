@@ -59,7 +59,7 @@ namespace Tryout_Respond.Controllers
 
             string username = Request.Headers.GetValues("username").SingleOrDefault();
 
-            string password = (new AccountManager()).Register(username);
+            string password = accountManager.Register(username);
 
             if (String.IsNullOrWhiteSpace(password))
             {
@@ -101,8 +101,8 @@ namespace Tryout_Respond.Controllers
         }
 
         [HttpPost]
-        [Route("ownAccount")]
-        public HttpResponseMessage GetOwnAccountInfo()
+        [Route("{userID}")]
+        public HttpResponseMessage GetAccountInfo(string userID)
         {
             if(!Request.Headers.GetValues("token").Any())
             {
@@ -121,7 +121,7 @@ namespace Tryout_Respond.Controllers
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
             }
 
-            string ownAccountInfo = accountManager.GetOwnAccountInfo(token);
+            string ownAccountInfo = accountManager.GetAccountInfo(userID, token);
 
             if(String.IsNullOrWhiteSpace(ownAccountInfo))
             {
