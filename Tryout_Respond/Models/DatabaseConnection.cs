@@ -8,26 +8,27 @@ namespace Tryout_Respond
 {
     public class DatabaseConnection
     {
-        private SqlConnection connection;
-        public static string CONNECTIONSTRING = "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
+        public SqlConnection sqlConnection { get; set; }
+        public static string CONNECTIONSTRING { get; set; }
 
         public DatabaseConnection()
         {
-            connection = new SqlConnection(CONNECTIONSTRING);
+            CONNECTIONSTRING = "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
+            sqlConnection = new SqlConnection(CONNECTIONSTRING);
         }
 
         public bool RunNonQuery(string query)
         {
             var success = false;
 
-            connection.Open();
+            sqlConnection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            SqlCommand command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
-            transaction = connection.BeginTransaction();
+            transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = connection;
+            command.Connection = sqlConnection;
             command.Transaction = transaction;
 
             try
@@ -59,21 +60,21 @@ namespace Tryout_Respond
                 success = false;
             }
 
-            connection.Close();
+            sqlConnection.Close();
 
             return success;
         }
 
         public IList<object[]> RunQuery(string query)
         {
-            connection.Open();
+            sqlConnection.Open();
 
-            var command = connection.CreateCommand();
+            var command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
-            transaction = connection.BeginTransaction();
+            transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = connection;
+            command.Connection = sqlConnection;
             command.Transaction = transaction;
 
             var result = new List<object[]>();
@@ -114,7 +115,7 @@ namespace Tryout_Respond
                 }
             }
 
-            connection.Close();
+            sqlConnection.Close();
 
             return result;
         }

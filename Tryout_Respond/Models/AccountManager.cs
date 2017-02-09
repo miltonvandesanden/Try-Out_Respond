@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 
 namespace Tryout_Respond.Models
@@ -22,6 +23,22 @@ namespace Tryout_Respond.Models
             {
                 return token;
             }
+
+            /*MySqlCommand cmd = MySqlConn.cmd;
+            cmd = new MySqlCommand(
+                "SELECT count(*) FROM admin " +
+                "WHERE admin_username=@username " +
+                "AND admin_password=PASSWORD(@passwd)",
+                MySqlConn.conn);
+            cmd.Prepare();
+            cmd.Parameters.AddWithValue("@username", username);
+            cmd.Parameters.AddWithValue("@passwd", password);
+            int result = (int)cmd.ExecuteReader();
+
+            // Returns true when username and password match:
+            return (result > 0);*/
+
+            /*SqlCommand sqlCommand = connection.*/
 
             IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
 
@@ -44,26 +61,26 @@ namespace Tryout_Respond.Models
 
         public string Register(string username)
         {
-            var password = String.Empty;
+            var passwordHash = String.Empty;
 
             if (username.Any(character => !Char.IsLetterOrDigit(character)))
             {
-                return password;
+                return passwordHash;
             }
 
             if (AccountExists(username))
             {
-                return password;
+                return passwordHash;
             }
 
-            password = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
-
-            if (!connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + password + "')"))
+            var unencryptedPassword = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
+            passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
+            if (!connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + passwordHash + "')"))
             {
-                return password = String.Empty;
+                return passwordHash = String.Empty;
             }
 
-            return password;
+            return unencryptedPassword;
         }
 
         private bool AccountExists(string username)
