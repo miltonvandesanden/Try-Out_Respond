@@ -8,109 +8,85 @@ namespace Tryout_Respond
 {
     public class DatabaseConnection
     {
-        private SqlConnection connection;
+        public SqlConnection sqlConnection { get; set; }
+        public static string CONNECTIONSTRING { get; set; }
 
         public DatabaseConnection()
         {
-            connection = new SqlConnection(GetConnectionString());
+            CONNECTIONSTRING = "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
+            sqlConnection = new SqlConnection(CONNECTIONSTRING);
         }
 
-        static private string GetConnectionString()
+        public bool RunNonQuery(string query)
         {
-            return "Data Source=(local);Initial Catalog=Respond_TryOut_Database;Integrated Security=SSPI;";
-        }
+            var success = false;
 
-        /*private string CreateSelectQuery(string column, string table)
-        {
-            return "SELECT " + column + " FROM " + table;
-        }
+            sqlConnection.Open();
 
-        private string CreateSelectQuery(string[] columns, string table)
-        {
-            String query = "SELECT ";
-
-            foreach (string column in columns)
-            {
-                query += column;
-
-                if (column != columns[columns.Count() - 1])
-                {
-                    query += ", ";
-                }
-            }
-
-            return query += " FROM " + table;
-        }
-
-        private string AddWhereClausToQuery(string valueToCompare, string comparator, string requiredValue, string query)
-        {
-            if (comparator != "=" && comparator != "!=" && comparator != "<" && comparator != ">" && comparator != "<=" && comparator != ">=")
-            {
-                throw new ArgumentException("operator: " + comparator + "is not a valid operator");
-            }
-
-            return query += " WHERE " + valueToCompare + " " + comparator + " " + requiredValue;
-        }*/
-
-        public void RunNonQuery(string query)
-        {
-            connection.Open();
-
-            SqlCommand command = connection.CreateCommand();
+            SqlCommand command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
-            transaction = connection.BeginTransaction();
+            transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = connection;
+            command.Connection = sqlConnection;
             command.Transaction = transaction;
 
             try
             {
                 command.CommandText = query;
-                command.ExecuteNonQuery();
+
+                if (command.ExecuteNonQuery() > 0)
+                {
+                    success = true;
+                }
 
                 transaction.Commit();
                 Console.WriteLine("query: " + query + "succesfully executed");
             }
-            catch(Exception ex)
+            catch(Exception queryExecutionException)
             {
+                Console.WriteLine(queryExecutionException.InnerException);
                 Console.WriteLine("failed to execute query: " + query);
 
                 try
                 {
                     transaction.Rollback();
                 }
-                catch (Exception ex2)
+                catch (Exception rollbackException)
                 {
                     Console.WriteLine("failed to rollback");
                 }
+
+                success = false;
             }
 
-            connection.Close();
+            sqlConnection.Close();
+
+            return success;
         }
 
-        public List<object[]> RunQuery(string query)
+        public IList<object[]> RunQuery(string query)
         {
-            connection.Open();
+            sqlConnection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            var command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
-            transaction = connection.BeginTransaction();
+            transaction = sqlConnection.BeginTransaction();
 
-            command.Connection = connection;
+            command.Connection = sqlConnection;
             command.Transaction = transaction;
 
-            List<object[]> result = new List<object[]>();
+            var result = new List<object[]>();
 
             try
             {
                 command.CommandText = query;
-                SqlDataReader reader = command.ExecuteReader();
+                var reader = command.ExecuteReader();
 
                 while(reader.Read())
                 {
-                    object[] row = new object[reader.FieldCount];
+                    var row = new object[reader.FieldCount];
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
@@ -139,7 +115,7 @@ namespace Tryout_Respond
                 }
             }
 
-            connection.Close();
+            sqlConnection.Close();
 
             return result;
         }
