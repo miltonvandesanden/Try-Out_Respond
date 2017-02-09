@@ -42,7 +42,7 @@ namespace Tryout_Respond.Models
 
             var passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
 
-            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + passwordHash + "'");
+            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND passwordHash = '" + passwordHash + "'");
 
             if (!results.Any())
             {
@@ -50,7 +50,7 @@ namespace Tryout_Respond.Models
             }
 
             token = Guid.NewGuid().ToString();
-            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH:mm");
 
             if (!connection.RunNonQuery("UPDATE Users SET token='" + token + "', token_expirationDate='" + expirationDate + "' WHERE username = '" + username + "'"))
             {
@@ -77,12 +77,27 @@ namespace Tryout_Respond.Models
 
             var unencryptedPassword = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
             passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
-            if (!connection.RunNonQuery("INSERT INTO Users(username, password) VALUES('" + username + "', '" + passwordHash + "')"))
+
+            string userID = GenerateUserID();
+
+            if (!connection.RunNonQuery("INSERT INTO Users(userID, username, passwordHash) VALUES('" + userID + "', '" + username + "', '" + passwordHash + "')"))
             {
                 return passwordHash = String.Empty;
             }
 
             return unencryptedPassword;
+        }
+
+        public string GenerateUserID()
+        {
+            var userID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 4);
+
+            if(connection.RunQuery("SELECT userID FROM Users WHERE userID = '" + userID + "'").Any())
+            {
+                userID = GenerateUserID();
+            }
+
+            return userID;
         }
 
         private bool AccountExists(string username)
@@ -94,7 +109,7 @@ namespace Tryout_Respond.Models
 
         public bool isTokenValid(string token)
         {
-            IList<object[]> results = connection.RunQuery("SELECT token FROM Users WHERE token = '" + token + "' AND token_expirationDate > '" + DateTime.UtcNow.ToString("yyyyMMdd HH: MM:ss") + "'");
+            IList<object[]> results = connection.RunQuery("SELECT token FROM Users WHERE token = '" + token + "' AND token_expirationDate > '" + DateTime.UtcNow.ToString("yyyyMMdd HH:mm") + "'");
 
             return results.Any();
         }
@@ -103,7 +118,7 @@ namespace Tryout_Respond.Models
         {
             var accountInfo = String.Empty;
 
-            IList<object[]> results = connection.RunQuery("SELECT username, password FROM Users WHERE token = '" + token + "'");
+            IList<object[]> results = connection.RunQuery("SELECT username, passwordHash FROM Users WHERE token = '" + token + "'");
 
             foreach (object accountField in results.First())
             {
@@ -116,7 +131,7 @@ namespace Tryout_Respond.Models
         public String RefreshToken(string oldToken)
         {
             var newToken = Guid.NewGuid().ToString();
-            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH: MM:ss");
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH:mm");
 
             if (!connection.RunNonQuery("UPDATE Users SET token='" + newToken + "', token_expirationDate='" + expirationDate + "' WHERE token = '" + oldToken + "'"))
             {
