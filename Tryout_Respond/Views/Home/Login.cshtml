@@ -1,0 +1,29 @@
+﻿@model Tryout_Respond.Models.LoginModel
+
+@{
+    ViewBag.Title = "Login";
+}
+
+<h2>Login</h2>
+<form method="post" id="logInForm">
+    <div class="col-md-offset-5">
+        <div>
+            @Html.EditorFor(model => model.Username)
+        </div>
+        <div>
+            @Html.EditorFor(model => model.Password)
+        </div>
+        <div>
+            <input type="submit" id="logIn" value="Log in" class="btn btn-success" />
+        </div>
+    </div>
+</form>
+
+@section scripts{
+    <script type="text/javascript">
+        $('#logIn').click(function () {
+            $.get("api/login"
+              );
+        });
+    </script>
+    }

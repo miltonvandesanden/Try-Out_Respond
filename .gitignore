@@ -45,3 +45,13 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+.vs/config/applicationhost.config
+*.config
+*.user
+Tryout_Respond/Tryout_Respond.csproj.user
+.vs/config/applicationhost.config
+Tryout_Respond/bin/Tryout_Respond.dll
+Tryout_Respond/bin/Tryout_Respond.dll
+Tryout_Respond/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+Tryout_Respond/obj/Debug/Tryout_Respond.dll
+Tryout_Respond/Tryout_Respond.csproj.user
