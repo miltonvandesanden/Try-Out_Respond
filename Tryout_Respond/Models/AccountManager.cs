@@ -11,9 +11,16 @@ namespace Tryout_Respond.Models
     public class AccountManager
     {
         public const int MINIMALPASSWORDLENGTH = 8;
+        public const int MAXIMUMPASSWORDLENGTH = 15;
+
         public const int TOKENLIFETIME = 20; //minutes
 
-        DatabaseConnection connection = new DatabaseConnection();
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+
+        public string HashPassword(string unencryptedPassword)
+        {
+            return Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
+        }
 
         public string Authenticate(string username, string unencryptedPassword)
         {
@@ -24,35 +31,22 @@ namespace Tryout_Respond.Models
                 return token;
             }
 
-            /*MySqlCommand cmd = MySqlConn.cmd;
-            cmd = new MySqlCommand(
-                "SELECT count(*) FROM admin " +
-                "WHERE admin_username=@username " +
-                "AND admin_password=PASSWORD(@passwd)",
-                MySqlConn.conn);
-            cmd.Prepare();
-            cmd.Parameters.AddWithValue("@username", username);
-            cmd.Parameters.AddWithValue("@passwd", password);
-            int result = (int)cmd.ExecuteReader();
+            if(unencryptedPassword.Length < MINIMALPASSWORDLENGTH || unencryptedPassword.Length > MAXIMUMPASSWORDLENGTH)
+            {
+                return token;
+            }
 
-            // Returns true when username and password match:
-            return (result > 0);*/
+            var passwordHash = HashPassword(unencryptedPassword);
 
-            /*SqlCommand sqlCommand = connection.*/
-
-            var passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
-
-            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND passwordHash = '" + passwordHash + "'");
-
-            if (!results.Any())
+            if(!databaseConnection.IsAccountOwner(username, passwordHash))
             {
                 return token;
             }
 
             token = Guid.NewGuid().ToString();
-            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH:mm");
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME)/*.ToString("yyyyMMdd HH:mm")*/;
 
-            if (!connection.RunNonQuery("UPDATE Users SET token='" + token + "', token_expirationDate='" + expirationDate + "' WHERE username = '" + username + "'"))
+            if (!databaseConnection.SetToken(token, expirationDate, username))
             {
                 return token = String.Empty;
             }
@@ -70,17 +64,17 @@ namespace Tryout_Respond.Models
                 return passwordHash;
             }
 
-            if (AccountExists(username))
+            if (databaseConnection.AccountExistsUsername(username))
             {
                 return passwordHash;
             }
 
-            var unencryptedPassword = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MINIMALPASSWORDLENGTH);
-            passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
+            var unencryptedPassword = Guid.NewGuid().ToString().Replace("-", "").Substring(0, MAXIMUMPASSWORDLENGTH);
+            passwordHash = HashPassword(unencryptedPassword);
 
             string userID = GenerateUserID();
 
-            if (!connection.RunNonQuery("INSERT INTO Users(userID, username, passwordHash) VALUES('" + userID + "', '" + username + "', '" + passwordHash + "')"))
+            if (!databaseConnection.InsertUser(userID, username, passwordHash))
             {
                 return passwordHash = String.Empty;
             }
@@ -90,9 +84,9 @@ namespace Tryout_Respond.Models
 
         public string GenerateUserID()
         {
-            var userID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 4);
+            var userID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 3);
 
-            if(connection.RunQuery("SELECT userID FROM Users WHERE userID = '" + userID + "'").Any())
+            if(databaseConnection.AccountExistsUserID(userID))
             {
                 userID = GenerateUserID();
             }
@@ -100,29 +94,18 @@ namespace Tryout_Respond.Models
             return userID;
         }
 
-        private bool AccountExists(string username)
-        {
-            IList<object[]> result = connection.RunQuery("SELECT userID FROM Users WHERE username = '" + username + "'");
-
-            return result.Any();
-        }
-
         public bool isTokenValid(string token)
         {
-            IList<object[]> results = connection.RunQuery("SELECT token FROM Users WHERE token = '" + token + "' AND token_expirationDate > '" + DateTime.UtcNow.ToString("yyyyMMdd HH:mm") + "'");
-
-            return results.Any();
+            return databaseConnection.IsTokenValid(token);
         }
 
-        public String GetOwnAccountInfo(string token)
+        public String GetAccountInfo(string userID, string token)
         {
-            var accountInfo = String.Empty;
+            string accountInfo = databaseConnection.GetUsername(userID);
 
-            IList<object[]> results = connection.RunQuery("SELECT username, passwordHash FROM Users WHERE token = '" + token + "'");
-
-            foreach (object accountField in results.First())
+            if (databaseConnection.IsAccountOwnerByToken(userID, token))
             {
-                accountInfo += accountField + ":";
+                accountInfo += databaseConnection.GetPasswordByUserID(userID);
             }
 
             return accountInfo;
@@ -131,9 +114,9 @@ namespace Tryout_Respond.Models
         public String RefreshToken(string oldToken)
         {
             var newToken = Guid.NewGuid().ToString();
-            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME).ToString("yyyyMMdd HH:mm");
+            var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME)/*.ToString("yyyyMMdd HH:mm")*/;
 
-            if (!connection.RunNonQuery("UPDATE Users SET token='" + newToken + "', token_expirationDate='" + expirationDate + "' WHERE token = '" + oldToken + "'"))
+            if(!databaseConnection.RefreshToken(oldToken, newToken, expirationDate))
             {
                 return newToken = String.Empty;
             }
