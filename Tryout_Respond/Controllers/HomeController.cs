@@ -21,12 +21,12 @@ namespace Tryout_Respond.Controllers
             return View();
         }
 
-        [HttpPost]
-        public ActionResult Login(LoginModel loginModel)
-        {
-            var login = new LogInController().Login(loginModel);
-
-            return View(login);
-        }
+       // [HttpPost]
+       // public ActionResult Login(LoginModel loginModel)
+       // {
+       //     var login = new LogInController().Login(loginModel);
+       //
+       //     return View(login);
+       // }
     }
 }
