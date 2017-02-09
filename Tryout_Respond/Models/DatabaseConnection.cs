@@ -22,7 +22,6 @@ namespace Tryout_Respond
         {
             var success = false;
 
-            //SqlCommand command = sqlConnection.CreateCommand();
             SqlTransaction transaction;
 
             transaction = sqlConnection.BeginTransaction();
@@ -32,8 +31,6 @@ namespace Tryout_Respond
 
             try
             {
-                //command.CommandText = query;
-
                 if (sqlCommand.ExecuteNonQuery() > 0)
                 {
                     success = true;
@@ -41,6 +38,8 @@ namespace Tryout_Respond
 
                 transaction.Commit();
                 Console.WriteLine("query: " + sqlCommand.ToString() + "succesfully executed");
+
+                return success;
             }
             catch(Exception queryExecutionException)
             {
@@ -56,10 +55,8 @@ namespace Tryout_Respond
                     Console.WriteLine("failed to rollback");
                 }
 
-                success = false;
+                return success = false;
             }
-
-            return success;
         }
 
         public IList<object[]> RunQuery(SqlCommand sqlCommand)
@@ -71,7 +68,7 @@ namespace Tryout_Respond
             sqlCommand.Connection = sqlConnection;
             sqlCommand.Transaction = transaction;
 
-            var result = new List<object[]>();
+            var results = new List<object[]>();
 
             try
             {
@@ -87,13 +84,15 @@ namespace Tryout_Respond
                         row[i] = reader.GetValue(i);
                     }
 
-                    result.Add(row);
+                    results.Add(row);
                 }
 
                 reader.Close();
 
                 transaction.Commit();
                 Console.WriteLine("query: " + sqlCommand.ToString() + "succesfully executed");
+
+                return results;
             }
             catch (Exception ex)
             {
@@ -107,9 +106,9 @@ namespace Tryout_Respond
                 {
                     Console.WriteLine("failed to rollback");
                 }
-            }
 
-            return result;
+                return results = new List<object[]>();
+            }
         }
 
         public bool IsAccountOwner(string username, string passwordHash)
