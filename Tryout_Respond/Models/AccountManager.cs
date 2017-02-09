@@ -15,11 +15,11 @@ namespace Tryout_Respond.Models
 
         DatabaseConnection connection = new DatabaseConnection();
 
-        public string Authenticate(string username, string password)
+        public string Authenticate(string username, string unencryptedPassword)
         {
             var token = String.Empty;
 
-            if(username.Any(character => !Char.IsLetterOrDigit(character)) || password.Any(character => !Char.IsLetterOrDigit(character)))
+            if(username.Any(character => !Char.IsLetterOrDigit(character)) || unencryptedPassword.Any(character => !Char.IsLetterOrDigit(character)))
             {
                 return token;
             }
@@ -40,7 +40,9 @@ namespace Tryout_Respond.Models
 
             /*SqlCommand sqlCommand = connection.*/
 
-            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + password + "'");
+            var passwordHash = Encoding.ASCII.GetString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes(unencryptedPassword)));
+
+            IList<object[]> results = connection.RunQuery("SELECT Username FROM Users WHERE username = '" + username + "' AND password = '" + passwordHash + "'");
 
             if (!results.Any())
             {
