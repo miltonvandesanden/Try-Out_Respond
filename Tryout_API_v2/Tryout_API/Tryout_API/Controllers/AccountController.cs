@@ -130,5 +130,34 @@ namespace Tryout_Respond.Controllers
 
             return Request.CreateResponse(HttpStatusCode.OK, ownAccountInfo);
         }
+
+        [HttpPost]
+        [Route("logout")]
+        public HttpResponseMessage Logout()
+        {
+            if (!Request.Headers.GetValues("token").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").SingleOrDefault();
+
+            if (String.IsNullOrWhiteSpace(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if (!accountManager.isTokenValid(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if(!accountManager.DeleteToken(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, "logged out");
+        }
     }
 }

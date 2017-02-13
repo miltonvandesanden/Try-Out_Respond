@@ -425,5 +425,31 @@ namespace Tryout_Respond
                 return password = String.Empty;
             }
         }
+
+        public bool DeleteToken(string token)
+        {
+            bool success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET token=null, token_expirationDate=null WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch(Exception exception)
+            {
+                return success = false;
+            }
+        }
     }
 }

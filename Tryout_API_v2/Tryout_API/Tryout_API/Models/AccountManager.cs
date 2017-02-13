@@ -123,5 +123,10 @@ namespace Tryout_Respond.Models
 
             return newToken;
         }
+
+        public bool DeleteToken(string token)
+        {
+            return databaseConnection.DeleteToken(token);
+        }
     }
 }
