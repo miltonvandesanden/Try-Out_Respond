@@ -46,7 +46,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 .vs/config/applicationhost.config
-*.config
 *.user
 Tryout_Respond/Tryout_Respond.csproj.user
 .vs/config/applicationhost.config

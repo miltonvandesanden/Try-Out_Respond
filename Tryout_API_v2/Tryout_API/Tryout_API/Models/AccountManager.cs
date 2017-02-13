@@ -128,5 +128,12 @@ namespace Tryout_Respond.Models
         {
             return databaseConnection.DeleteToken(token);
         }
+
+        public bool ChangePassword(string token, string unencryptedNewPassword)
+        {
+            string passwordHash = HashPassword(unencryptedNewPassword);
+
+            return databaseConnection.ChangePassword(token, passwordHash);
+        }
     }
 }

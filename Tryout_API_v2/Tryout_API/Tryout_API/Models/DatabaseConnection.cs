@@ -451,5 +451,34 @@ namespace Tryout_Respond
                 return success = false;
             }
         }
+
+        public bool ChangePassword(string token, string passwordHash)
+        {
+            bool success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET passwordHash=@passwordHash WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch(Exception exception)
+            {
+                return success = false;
+            }
+        }
     }
 }

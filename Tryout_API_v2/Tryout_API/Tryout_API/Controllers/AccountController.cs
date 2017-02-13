@@ -159,5 +159,36 @@ namespace Tryout_Respond.Controllers
 
             return Request.CreateResponse(HttpStatusCode.OK, "logged out");
         }
+
+        [HttpPost]
+        [Route("changePassword")]
+        public HttpResponseMessage ChangePassword()
+        {
+            if (!Request.Headers.GetValues("token").Any() || !Request.Headers.GetValues("password").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").SingleOrDefault();
+            string unencryptedNewPassword = Request.Headers.GetValues("password").SingleOrDefault();
+
+            if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(unencryptedNewPassword))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if (!accountManager.isTokenValid(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if (!accountManager.ChangePassword(token, unencryptedNewPassword))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, unencryptedNewPassword);
+        }
+
     }
 }
