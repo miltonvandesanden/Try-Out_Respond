@@ -131,9 +131,20 @@ namespace Tryout_Respond.Models
 
         public bool ChangePassword(string token, string unencryptedNewPassword)
         {
+            var success = false;
+
+            if (unencryptedNewPassword.Length < MINIMALPASSWORDLENGTH || unencryptedNewPassword.Length > MAXIMUMPASSWORDLENGTH)
+            {
+                return success = false;
+            }
+
             string passwordHash = HashPassword(unencryptedNewPassword);
 
-            return databaseConnection.ChangePassword(token, passwordHash);
+            success = databaseConnection.ChangePassword(token, passwordHash);
+
+            DeleteToken(token);
+
+            return success;
         }
     }
 }
