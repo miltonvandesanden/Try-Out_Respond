@@ -1,0 +1,16 @@
+﻿
+@{
+    ViewBag.Title = "Login_Result";
+}
+
+<h2>Login Result</h2>
+@if (ViewBag.Items == null)
+{
+}
+else
+{
+foreach(var item in ViewBag.Items)
+{
+    @item
+}
+}

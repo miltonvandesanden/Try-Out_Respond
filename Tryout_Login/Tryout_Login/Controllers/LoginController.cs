@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -22,7 +23,7 @@ namespace Tryout_Login.Controllers
         }
 
         [HttpPost]
-        public void Login(LoginViewModel model)
+        public ActionResult Login(LoginViewModel model)
         {
             if (model.password == null)
             {
@@ -32,44 +33,57 @@ namespace Tryout_Login.Controllers
             {
                 PostAuth(model);
             }
+
+            return View("~/Views/Login/Login_Result.cshtml");
+
         }
 
-        [HttpPost]
-        //[Route("api/accounts/register")]
-        public HttpWebRequest PostRegister(LoginViewModel model)
+        public void PostRegister(LoginViewModel model)
         {
+
             string url = "http://localhost:54295/api/accounts/register";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Headers.Add("username", model.username);
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            request.Method = "POST";
+            request.ContentLength = 0;            
 
-            return request;
+            string result;
+
+            using (WebResponse response = request.GetResponse())
+            {
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                {
+                    result = reader.ReadToEnd();
+                }
+            }
+
+            ViewBag.Items = "Je nieuwe wachtwoord is: " + result;
+
         }
 
-        public HttpWebRequest PostAuth(LoginViewModel model)
+        public void PostAuth(LoginViewModel model)
         {
-            string url = "http://localhost:54295/api/accounts/register";
+            string url = "http://localhost:54295/api/accounts/auth";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            //request.Credentials = GetCredentials(model);
             request.PreAuthenticate = true;
+            request.Method = "POST";
             request.UseDefaultCredentials = false;
+
             String encoded = System.Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(model.username + ":" + model.password));
             request.Headers.Add("Authorization", "Basic " + encoded);
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            request.ContentLength = 0;
 
-            return request;
-        }
+            string result;
 
-        public CredentialCache GetCredentials(LoginViewModel model)
-        {
-            string username = model.username;
-            string password = model.password;
+            using (WebResponse response = request.GetResponse())
+            {
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                {
+                    result = reader.ReadToEnd();
+                }
+            }
 
-            string url = "http://localhost:54295/api/accounts/auth";
-            //ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
-            CredentialCache credentialCache = new CredentialCache();
-            credentialCache.Add(new System.Uri(url), "Basic", new NetworkCredential(username, password));
-            return credentialCache;
+            ViewBag.Items = result;
         }
     }
 }
