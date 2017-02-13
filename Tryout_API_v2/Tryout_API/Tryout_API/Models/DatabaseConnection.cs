@@ -339,7 +339,7 @@ namespace Tryout_Respond
             }
         }
 
-        public bool InsertUser(string userID, string username, string passwordHash)
+        public bool InsertUser(string userID, string username, string passwordHash, bool isAdmin)
         {
             var successfull = false;
 
@@ -347,7 +347,7 @@ namespace Tryout_Respond
             {
                 sqlConnection.Open();
 
-                SqlCommand sqlCommand = new SqlCommand("INSERT INTO Users(userID, username, passwordHash) VALUES(@userID, @username, @passwordHash)", sqlConnection);
+                SqlCommand sqlCommand = new SqlCommand("INSERT INTO Users(userID, username, passwordHash,isAdmin) VALUES(@userID, @username, @passwordHash, @isAdmin)", sqlConnection);
                 sqlCommand.Parameters.AddWithValue("@userID", userID);
                 sqlCommand.Parameters["@userID"].DbType = DbType.String;
                 sqlCommand.Parameters["@userID"].Size = 6;
@@ -357,6 +357,9 @@ namespace Tryout_Respond
                 sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
                 sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
                 sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@isAdmin", isAdmin);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.Boolean;
+                sqlCommand.Parameters["@isAdmin"].Size = 1;
                 sqlCommand.Prepare();
 
                 successfull = RunNonQuery(sqlCommand);
@@ -428,7 +431,7 @@ namespace Tryout_Respond
 
         public bool DeleteToken(string token)
         {
-            bool success = false;
+            var success = false;
 
             try
             {
@@ -454,7 +457,7 @@ namespace Tryout_Respond
 
         public bool ChangePassword(string token, string passwordHash)
         {
-            bool success = false;
+            var success = false;
 
             try
             {
@@ -479,6 +482,77 @@ namespace Tryout_Respond
             {
                 return success = false;
             }
+        }
+
+        public bool IsAdmin(string token)
+        {
+            var isAdmin = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT isAdmin FROM Users WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                foreach(object[] value in RunQuery(sqlCommand))
+                {
+                    isAdmin = (bool)value[0];
+                }
+
+                sqlConnection.Close();
+
+                return isAdmin;
+            }
+            catch(Exception exception)
+            {
+                return isAdmin = false;
+            }
+        }
+
+        public bool MakeAdmin(string userID, bool isAdmin)
+        {
+            var success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET isAdmin=@isAdmin WHERE userID=@userID");
+                sqlCommand.Parameters.AddWithValue("@isAdmin", isAdmin);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.Boolean;
+                sqlCommand.Parameters["@isAdmin"].Size = 1;
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.String;
+                sqlCommand.Parameters["@isAdmin"].Size = 6;
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch(Exception exception)
+            {
+                return success = false;
+            }
+        }
+
+        public IList<object[]> GetUserIDs()
+        {
+            sqlConnection.Open();
+
+            SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users", sqlConnection);
+            sqlCommand.Prepare();
+
+            IList<object[]> results = RunQuery(sqlCommand);
+
+            sqlConnection.Close();
+
+            return results;
         }
     }
 }

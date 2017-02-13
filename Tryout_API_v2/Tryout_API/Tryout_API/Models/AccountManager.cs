@@ -64,7 +64,7 @@ namespace Tryout_Respond.Models
                 return passwordHash;
             }
 
-            if (databaseConnection.AccountExistsUsername(username))
+            if (AccountExistsUsername(username))
             {
                 return passwordHash;
             }
@@ -74,7 +74,8 @@ namespace Tryout_Respond.Models
 
             string userID = GenerateUserID();
 
-            if (!databaseConnection.InsertUser(userID, username, passwordHash))
+            var isAdmin = false;
+            if (!databaseConnection.InsertUser(userID, username, passwordHash, isAdmin = false))
             {
                 return passwordHash = String.Empty;
             }
@@ -145,6 +146,31 @@ namespace Tryout_Respond.Models
             DeleteToken(token);
 
             return success;
+        }
+
+        public bool AccountExistsUsername(string username)
+        {
+            return databaseConnection.AccountExistsUsername(username);
+        }
+
+        public bool AccountExistsUserID(string userID)
+        {
+            return databaseConnection.AccountExistsUserID(userID);
+        }
+
+        public bool IsAdmin(string token)
+        {
+            return databaseConnection.IsAdmin(token);
+        }
+
+        public bool MakeAdmin(string userID, bool isAdmin)
+        {
+            return databaseConnection.MakeAdmin(userID, isAdmin);
+        }
+
+        public IList<object[]> GetUserIDs()
+        {
+            return databaseConnection.GetUserIDs();
         }
     }
 }

@@ -59,6 +59,7 @@ namespace Tryout_Respond.Controllers
 
             string username = Request.Headers.GetValues("username").SingleOrDefault();
 
+            bool isAdmin = false;
             string password = accountManager.Register(username);
 
             if (String.IsNullOrWhiteSpace(password))
@@ -68,6 +69,40 @@ namespace Tryout_Respond.Controllers
 
             return Request.CreateResponse(HttpStatusCode.OK, password);
         }
+
+        /*[HttpPost]
+        [Route("registerAdmin")]
+        public HttpResponseMessage RegisterAdmin()
+        {
+            if (!Request.Headers.GetValues("token").Any() || !Request.Headers.GetValues("username").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").SingleOrDefault();
+            string username = Request.Headers.GetValues("username").SingleOrDefault();
+
+            if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(username))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            bool isAdmin = accountManager.IsAdmin(token);
+
+            if (!accountManager.isTokenValid(token) || !isAdmin || accountManager.AccountExistsUsername(username))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string password = accountManager.Register(username, isAdmin = true);
+
+            if (String.IsNullOrWhiteSpace(password))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "invalid credentials");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, password);
+        }*/
 
         [HttpPost]
         [Route("refreshToken")]
@@ -99,6 +134,38 @@ namespace Tryout_Respond.Controllers
 
             return Request.CreateResponse(HttpStatusCode.OK, newToken);
         }
+
+        [HttpPost]
+        [Route("{userID}/makeadmin")]
+        public HttpResponseMessage MakeAdmin(string userID)
+        {
+            if(!Request.Headers.GetValues("token").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").FirstOrDefault();
+
+            if(String.IsNullOrWhiteSpace(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if (!accountManager.isTokenValid(token) || !accountManager.IsAdmin(token) || !accountManager.AccountExistsUserID(userID))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            var isAdmin = true;
+
+            if (!accountManager.MakeAdmin(userID, isAdmin))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, userID + "set to admin");
+        }
+
 
         [HttpPost]
         [Route("{userID}")]
@@ -188,6 +255,38 @@ namespace Tryout_Respond.Controllers
             }
 
             return Request.CreateResponse(HttpStatusCode.OK, unencryptedNewPassword);
+        }
+
+        [HttpPost]
+        [Route("")]
+        public HttpResponseMessage GetAccounts()
+        {
+            if (!Request.Headers.GetValues("token").Any())
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            string token = Request.Headers.GetValues("token").SingleOrDefault();
+
+            if (String.IsNullOrWhiteSpace(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            if (!accountManager.isTokenValid(token) || !accountManager.IsAdmin(token))
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+
+            var userInfo = String.Empty;
+
+            foreach(object[] userID in accountManager.GetUserIDs())
+            {
+                userInfo += accountManager.GetAccountInfo(userID[0].ToString(), token);
+                userInfo += Environment.NewLine;
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, userInfo);
         }
 
     }
