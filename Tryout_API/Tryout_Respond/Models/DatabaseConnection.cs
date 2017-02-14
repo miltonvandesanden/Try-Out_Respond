@@ -497,8 +497,8 @@ namespace Tryout_Respond
                 sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
                 sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
                 sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@token"].DbType = DbType.String;
-                sqlCommand.Parameters["@token"].Size = 6;
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
                 sqlCommand.Prepare();
 
                 success = RunNonQuery(sqlCommand);
@@ -555,8 +555,8 @@ namespace Tryout_Respond
                 sqlCommand.Parameters["@isAdmin"].DbType = DbType.Boolean;
                 sqlCommand.Parameters["@isAdmin"].Size = 1;
                 sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@isAdmin"].DbType = DbType.String;
-                sqlCommand.Parameters["@isAdmin"].Size = 6;
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
 
                 success = RunNonQuery(sqlCommand);
 

@@ -122,7 +122,7 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, userID + "set to admin");
+                return Request.CreateResponse(HttpStatusCode.OK, userID + " set to admin");
             }
             catch (InvalidOperationException invalidOperationException)
             {

@@ -13,7 +13,8 @@ namespace Tryout_Respond.Controllers
     public class LoginController : ApiController
     {
         private const string authorizationType = "Basic";
-        private AccountManager accountManager = new AccountManager();
+        private LoginManager loginManager = new LoginManager();
+        private Misc misc = new Misc();
 
         [HttpPost]
         [Route("register")]
@@ -29,7 +30,7 @@ namespace Tryout_Respond.Controllers
                 string username = Request.Headers.GetValues("username").SingleOrDefault();
 
                 bool isAdmin = false;
-                string password = accountManager.Register(username);
+                string password = loginManager.Register(username);
 
                 if (String.IsNullOrWhiteSpace(password))
                 {
@@ -67,7 +68,7 @@ namespace Tryout_Respond.Controllers
             var username = usernamePassword.Substring(0, seperatorIndex);
             var password = usernamePassword.Substring(seperatorIndex + 1);
 
-            string token = accountManager.Authenticate(username, password);
+            string token = loginManager.Authenticate(username, password);
 
             if (String.IsNullOrWhiteSpace(token))
             {
@@ -95,12 +96,12 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                if (!accountManager.IsTokenValid(token))
+                if (!misc.IsTokenValid(token))
                 {
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                if (!accountManager.DeleteToken(token))
+                if (!loginManager.DeleteToken(token))
                 {
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
                 }
@@ -131,12 +132,12 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                if (!accountManager.IsTokenValid(oldToken))
+                if (!misc.IsTokenValid(oldToken))
                 {
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                String newToken = accountManager.RefreshToken(oldToken);
+                String newToken = loginManager.RefreshToken(oldToken);
 
                 if (String.IsNullOrWhiteSpace(newToken))
                 {
