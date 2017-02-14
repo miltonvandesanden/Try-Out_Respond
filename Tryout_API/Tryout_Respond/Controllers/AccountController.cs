@@ -151,7 +151,7 @@ namespace Tryout_Respond.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("")]
         public HttpResponseMessage GetAccounts()
         {
