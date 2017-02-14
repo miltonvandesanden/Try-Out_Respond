@@ -14,6 +14,7 @@ namespace Tryout_Respond.Controllers
     {
         private const string authorizationType = "Basic";
         private LoginManager loginManager = new LoginManager();
+        private UserManager userManager = new UserManager();
         private Misc misc = new Misc();
 
         [HttpPost]
@@ -75,7 +76,12 @@ namespace Tryout_Respond.Controllers
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
             }
 
-            return Request.CreateResponse(HttpStatusCode.OK, token);
+            object[] result = new object[3];
+            result[0] = token;
+            result[1] = misc.GetUserID(token);
+            result[2] = misc.IsAdmin(token);
+
+            return Request.CreateResponse(HttpStatusCode.OK, result/*token + ":" + misc.IsAdmin(token)*/);
         }
 
         [HttpPost]

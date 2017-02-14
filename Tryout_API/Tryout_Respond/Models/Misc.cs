@@ -52,5 +52,10 @@ namespace Tryout_Respond.Models
         {
             return databaseConnection.IsAccountOwnerByToken(userID, token);
         }
+
+        public string GetUserID(string token)
+        {
+            return databaseConnection.GetUserIDWithToken(token);
+        }
     }
 }

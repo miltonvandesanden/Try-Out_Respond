@@ -583,5 +583,22 @@ namespace Tryout_Respond
 
             return results;
         }
+
+        public string GetUserIDWithToken(string token)
+        {
+            sqlConnection.Open();
+
+            SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE token=@token", sqlConnection);
+            sqlCommand.Parameters.AddWithValue("@token", token);
+            sqlCommand.Parameters["@token"].DbType = DbType.String;
+            sqlCommand.Parameters["@token"].Size = 1073741823;
+            sqlCommand.Prepare();
+
+            string userID = RunQuery(sqlCommand).First().First().ToString();
+
+            sqlConnection.Close();
+
+            return userID;
+        }
     }
 }
