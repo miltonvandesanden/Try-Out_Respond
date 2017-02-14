@@ -38,7 +38,7 @@ namespace Tryout_Respond.Models
 
             var passwordHash = HashPassword(unencryptedPassword);
 
-            if (!databaseConnection.IsAccountOwner(username, passwordHash))
+            if (!databaseConnection.IsAccountOwnerCredentials(username, passwordHash))
             {
                 return token;
             }
@@ -95,7 +95,7 @@ namespace Tryout_Respond.Models
             return userID;
         }
 
-        public bool isTokenValid(string token)
+        public bool IsTokenValid(string token)
         {
             return databaseConnection.IsTokenValid(token);
         }
@@ -130,7 +130,7 @@ namespace Tryout_Respond.Models
             return databaseConnection.DeleteToken(token);
         }
 
-        public bool ChangePassword(string token, string unencryptedNewPassword)
+        public bool ChangePassword(string token, string userID, string unencryptedNewPassword)
         {
             var success = false;
 
@@ -141,7 +141,7 @@ namespace Tryout_Respond.Models
 
             string passwordHash = HashPassword(unencryptedNewPassword);
 
-            success = databaseConnection.ChangePassword(token, passwordHash);
+            success = databaseConnection.ChangePassword(userID, passwordHash);
 
             DeleteToken(token);
 
@@ -171,6 +171,11 @@ namespace Tryout_Respond.Models
         public IList<object[]> GetUserIDs()
         {
             return databaseConnection.GetUserIDs();
+        }
+
+        public bool IsAccountOwner(string token, string userID)
+        {
+            return databaseConnection.IsAccountOwnerByToken(userID, token);
         }
     }
 }
