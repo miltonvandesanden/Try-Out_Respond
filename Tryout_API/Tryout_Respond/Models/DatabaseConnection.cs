@@ -41,7 +41,7 @@ namespace Tryout_Respond
 
                 return success;
             }
-            catch(Exception queryExecutionException)
+            catch (Exception queryExecutionException)
             {
                 Console.WriteLine(queryExecutionException.InnerException);
                 Console.WriteLine("failed to execute query: " + sqlCommand.ToString());
@@ -75,7 +75,7 @@ namespace Tryout_Respond
                 //command.CommandText = query;
                 var reader = sqlCommand.ExecuteReader();
 
-                while(reader.Read())
+                while (reader.Read())
                 {
                     var row = new object[reader.FieldCount];
 
@@ -134,7 +134,7 @@ namespace Tryout_Respond
 
                 return isAccountOwner;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return isAccountOwner = false;
             }
@@ -163,7 +163,7 @@ namespace Tryout_Respond
 
                 return isAccountOwner;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return isAccountOwner = false;
             }
@@ -189,7 +189,7 @@ namespace Tryout_Respond
 
                 return userID;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return userID = String.Empty;
             }
@@ -215,7 +215,7 @@ namespace Tryout_Respond
 
                 return username;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return username = String.Empty;
             }
@@ -243,7 +243,7 @@ namespace Tryout_Respond
 
                 return accountExists;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return accountExists = false;
             }
@@ -301,7 +301,7 @@ namespace Tryout_Respond
 
                 return successfull;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return successfull = false;
             }
@@ -333,13 +333,13 @@ namespace Tryout_Respond
 
                 return successfull;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return successfull = false;
             }
         }
 
-        public bool InsertUser(string userID, string username, string passwordHash)
+        public bool InsertUser(string userID, string username, string passwordHash, bool isAdmin)
         {
             var successfull = false;
 
@@ -347,7 +347,7 @@ namespace Tryout_Respond
             {
                 sqlConnection.Open();
 
-                SqlCommand sqlCommand = new SqlCommand("INSERT INTO Users(userID, username, passwordHash) VALUES(@userID, @username, @passwordHash)", sqlConnection);
+                SqlCommand sqlCommand = new SqlCommand("INSERT INTO Users(userID, username, passwordHash,isAdmin) VALUES(@userID, @username, @passwordHash, @isAdmin)", sqlConnection);
                 sqlCommand.Parameters.AddWithValue("@userID", userID);
                 sqlCommand.Parameters["@userID"].DbType = DbType.String;
                 sqlCommand.Parameters["@userID"].Size = 6;
@@ -357,6 +357,9 @@ namespace Tryout_Respond
                 sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
                 sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
                 sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@isAdmin", isAdmin);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.Boolean;
+                sqlCommand.Parameters["@isAdmin"].Size = 1;
                 sqlCommand.Prepare();
 
                 successfull = RunNonQuery(sqlCommand);
@@ -365,7 +368,7 @@ namespace Tryout_Respond
 
                 return successfull;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return successfull = false;
             }
@@ -420,10 +423,136 @@ namespace Tryout_Respond
 
                 return password;
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return password = String.Empty;
             }
+        }
+
+        public bool DeleteToken(string token)
+        {
+            var success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET token=null, token_expirationDate=null WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch (Exception exception)
+            {
+                return success = false;
+            }
+        }
+
+        public bool ChangePassword(string token, string passwordHash)
+        {
+            var success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET passwordHash=@passwordHash WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch (Exception exception)
+            {
+                return success = false;
+            }
+        }
+
+        public bool IsAdmin(string token)
+        {
+            var isAdmin = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT isAdmin FROM Users WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                foreach (object[] value in RunQuery(sqlCommand))
+                {
+                    isAdmin = (bool)value[0];
+                }
+
+                sqlConnection.Close();
+
+                return isAdmin;
+            }
+            catch (Exception exception)
+            {
+                return isAdmin = false;
+            }
+        }
+
+        public bool MakeAdmin(string userID, bool isAdmin)
+        {
+            var success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET isAdmin=@isAdmin WHERE userID=@userID");
+                sqlCommand.Parameters.AddWithValue("@isAdmin", isAdmin);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.Boolean;
+                sqlCommand.Parameters["@isAdmin"].Size = 1;
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@isAdmin"].DbType = DbType.String;
+                sqlCommand.Parameters["@isAdmin"].Size = 6;
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch (Exception exception)
+            {
+                return success = false;
+            }
+        }
+
+        public IList<object[]> GetUserIDs()
+        {
+            sqlConnection.Open();
+
+            SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users", sqlConnection);
+            sqlCommand.Prepare();
+
+            IList<object[]> results = RunQuery(sqlCommand);
+
+            sqlConnection.Close();
+
+            return results;
         }
     }
 }

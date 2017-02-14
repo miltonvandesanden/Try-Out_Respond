@@ -26,19 +26,19 @@ namespace Tryout_Respond.Models
         {
             var token = String.Empty;
 
-            if(username.Any(character => !Char.IsLetterOrDigit(character)) || unencryptedPassword.Any(character => !Char.IsLetterOrDigit(character)))
+            if (username.Any(character => !Char.IsLetterOrDigit(character)) || unencryptedPassword.Any(character => !Char.IsLetterOrDigit(character)))
             {
                 return token;
             }
 
-            if(unencryptedPassword.Length < MINIMALPASSWORDLENGTH || unencryptedPassword.Length > MAXIMUMPASSWORDLENGTH)
+            if (unencryptedPassword.Length < MINIMALPASSWORDLENGTH || unencryptedPassword.Length > MAXIMUMPASSWORDLENGTH)
             {
                 return token;
             }
 
             var passwordHash = HashPassword(unencryptedPassword);
 
-            if(!databaseConnection.IsAccountOwner(username, passwordHash))
+            if (!databaseConnection.IsAccountOwner(username, passwordHash))
             {
                 return token;
             }
@@ -64,7 +64,7 @@ namespace Tryout_Respond.Models
                 return passwordHash;
             }
 
-            if (databaseConnection.AccountExistsUsername(username))
+            if (AccountExistsUsername(username))
             {
                 return passwordHash;
             }
@@ -74,7 +74,8 @@ namespace Tryout_Respond.Models
 
             string userID = GenerateUserID();
 
-            if (!databaseConnection.InsertUser(userID, username, passwordHash))
+            var isAdmin = false;
+            if (!databaseConnection.InsertUser(userID, username, passwordHash, isAdmin = false))
             {
                 return passwordHash = String.Empty;
             }
@@ -86,7 +87,7 @@ namespace Tryout_Respond.Models
         {
             var userID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 3);
 
-            if(databaseConnection.AccountExistsUserID(userID))
+            if (databaseConnection.AccountExistsUserID(userID))
             {
                 userID = GenerateUserID();
             }
@@ -116,12 +117,60 @@ namespace Tryout_Respond.Models
             var newToken = Guid.NewGuid().ToString();
             var expirationDate = DateTime.UtcNow.AddMinutes(TOKENLIFETIME)/*.ToString("yyyyMMdd HH:mm")*/;
 
-            if(!databaseConnection.RefreshToken(oldToken, newToken, expirationDate))
+            if (!databaseConnection.RefreshToken(oldToken, newToken, expirationDate))
             {
                 return newToken = String.Empty;
             }
 
             return newToken;
+        }
+
+        public bool DeleteToken(string token)
+        {
+            return databaseConnection.DeleteToken(token);
+        }
+
+        public bool ChangePassword(string token, string unencryptedNewPassword)
+        {
+            var success = false;
+
+            if (unencryptedNewPassword.Length < MINIMALPASSWORDLENGTH || unencryptedNewPassword.Length > MAXIMUMPASSWORDLENGTH)
+            {
+                return success = false;
+            }
+
+            string passwordHash = HashPassword(unencryptedNewPassword);
+
+            success = databaseConnection.ChangePassword(token, passwordHash);
+
+            DeleteToken(token);
+
+            return success;
+        }
+
+        public bool AccountExistsUsername(string username)
+        {
+            return databaseConnection.AccountExistsUsername(username);
+        }
+
+        public bool AccountExistsUserID(string userID)
+        {
+            return databaseConnection.AccountExistsUserID(userID);
+        }
+
+        public bool IsAdmin(string token)
+        {
+            return databaseConnection.IsAdmin(token);
+        }
+
+        public bool MakeAdmin(string userID, bool isAdmin)
+        {
+            return databaseConnection.MakeAdmin(userID, isAdmin);
+        }
+
+        public IList<object[]> GetUserIDs()
+        {
+            return databaseConnection.GetUserIDs();
         }
     }
 }
