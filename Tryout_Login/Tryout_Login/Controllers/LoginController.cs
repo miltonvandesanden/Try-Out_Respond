@@ -12,7 +12,8 @@ namespace Tryout_Login.Controllers
 {
     public class LoginController : Controller
     {
-        string prefix = "http://localhost:54295/api/accounts/";
+        string prefixLogin = "http://localhost:54295/api/login/";
+        string prefixUser = "http://localhost:54295/api/user/";
         string token;
 
         // GET: Login
@@ -58,7 +59,7 @@ namespace Tryout_Login.Controllers
         public void PostRegister(LoginViewModel model)
         {
 
-            string url = prefix + "register";
+            string url = prefixLogin + "register";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Headers.Add("username", model.username);
             request.Method = "POST";
@@ -80,7 +81,7 @@ namespace Tryout_Login.Controllers
 
         public void PostAuth(LoginViewModel model)
         {
-            string url = prefix + "auth";
+            string url = prefixLogin + "auth";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.PreAuthenticate = true;
             request.Method = "POST";
@@ -112,7 +113,7 @@ namespace Tryout_Login.Controllers
             token = Session["currentToken"].ToString();
             token = token.TrimEnd('"');
             token = token.TrimStart('"');
-            string url = prefix + "refreshToken";
+            string url = prefixLogin + "refreshToken";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
 
@@ -138,7 +139,7 @@ namespace Tryout_Login.Controllers
 
         public void PostLogout()
         {
-            string url = prefix + "logout";
+            string url = prefixLogin + "logout";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
 
@@ -160,7 +161,7 @@ namespace Tryout_Login.Controllers
 
         public void PostMakeAdmin()
         {
-            string url = prefix + "{userID}/makeadmin";
+            string url = prefixUser + "{userID}/makeadmin";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
 
@@ -182,7 +183,7 @@ namespace Tryout_Login.Controllers
 
         public void GetUserID()
         {
-            string url = prefix + "{userID}";
+            string url = prefixUser + "{userID}";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
 
@@ -204,7 +205,7 @@ namespace Tryout_Login.Controllers
 
         public void PostChangePassword(LoginViewModel model)
         {
-            string url = prefix + "changePassword";
+            string url = prefixUser + "changePassword";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
 
@@ -227,9 +228,9 @@ namespace Tryout_Login.Controllers
 
         public void GetAllAccounts()
         {
-            string url = prefix + "";
+            string url = prefixUser + "";
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
+            request.Method = "GET";
 
             request.Headers.Add("token", token);
             request.ContentLength = 0;
