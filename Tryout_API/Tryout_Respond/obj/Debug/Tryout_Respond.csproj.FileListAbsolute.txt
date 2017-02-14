@@ -266,3 +266,4 @@ C:\Users\Milton van de Sanden\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout
 C:\Users\Milton van de Sanden\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\bin\System.Web.Http.Owin.xml
 C:\Users\Milton van de Sanden\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.dll
 C:\Users\Milton van de Sanden\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.pdb
+C:\Users\Milton van de Sanden\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.csprojResolveAssemblyReference.cache

@@ -111,7 +111,7 @@ namespace Tryout_Respond
             }
         }
 
-        public bool IsAccountOwner(string username, string passwordHash)
+        public bool IsAccountOwnerCredentials(string username, string passwordHash)
         {
             var isAccountOwner = false;
 
@@ -124,6 +124,35 @@ namespace Tryout_Respond
                 sqlCommand.Parameters["@username"].DbType = DbType.String;
                 sqlCommand.Parameters["@username"].Size = 1073741823;
                 sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                isAccountOwner = RunQuery(sqlCommand).Any();
+
+                sqlConnection.Close();
+
+                return isAccountOwner;
+            }
+            catch (Exception exception)
+            {
+                return isAccountOwner = false;
+            }
+        }
+
+        public bool IsAccountOwnerToken(string token, string userID)
+        {
+            var isAccountOwner = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID AND token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 6;
+                sqlCommand.Parameters.AddWithValue("@token", token);
                 sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
                 sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
                 sqlCommand.Prepare();
@@ -455,7 +484,7 @@ namespace Tryout_Respond
             }
         }
 
-        public bool ChangePassword(string token, string passwordHash)
+        public bool ChangePassword(string userID, string passwordHash)
         {
             var success = false;
 
@@ -463,13 +492,13 @@ namespace Tryout_Respond
             {
                 sqlConnection.Open();
 
-                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET passwordHash=@passwordHash WHERE token=@token", sqlConnection);
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET passwordHash=@passwordHash WHERE userID=@userID", sqlConnection);
                 sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
                 sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
                 sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
-                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
                 sqlCommand.Parameters["@token"].DbType = DbType.String;
-                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Parameters["@token"].Size = 6;
                 sqlCommand.Prepare();
 
                 success = RunNonQuery(sqlCommand);
