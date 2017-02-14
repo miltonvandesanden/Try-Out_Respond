@@ -19,6 +19,17 @@ namespace Tryout_Login.Controllers
             return View();
         }
 
+        public ViewResult Registreer()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public void Registreer(LoginViewModel model)
+        {
+            Login(model);
+        }
+
         public ViewResult Login()
         {
             return View();

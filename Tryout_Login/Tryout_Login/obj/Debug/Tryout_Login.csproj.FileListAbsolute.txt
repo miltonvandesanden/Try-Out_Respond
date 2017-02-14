@@ -102,3 +102,4 @@ C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_Login\Tryout_Login\ob
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_Login\Tryout_Login\bin\Tryout_Login.dll
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_Login\Tryout_Login\bin\Tryout_Login.pdb
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_Login\Tryout_Login\bin\Tryout_Login.dll.config
+C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_Login\Tryout_Login\obj\Debug\Tryout_Login.csprojResolveAssemblyReference.cache

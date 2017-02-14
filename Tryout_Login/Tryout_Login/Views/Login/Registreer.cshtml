@@ -1,0 +1,16 @@
+﻿@model Tryout_Login.Models.LoginViewModel
+@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1> Login </h1>
+
+<div class="col-md-offset-5">
+    @using (Html.BeginForm())
+    {
+        @Html.Label("Username") 
+        <br/> 
+        @Html.EditorFor(model => model.username)
+        <p><input type="submit" value="Registreer" class="btn btn-success" /></p>
+    }
+</div>
