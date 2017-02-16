@@ -25,7 +25,7 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("username").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
                 }
 
                 string username = Request.Headers.GetValues("username").SingleOrDefault();
@@ -42,7 +42,7 @@ namespace Tryout_Respond.Controllers
             }
             catch (InvalidOperationException invalidOperationException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
         }
 
@@ -52,12 +52,12 @@ namespace Tryout_Respond.Controllers
         {
             if (Request.Headers.Authorization == null)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "Authorization invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
 
             if (!Request.Headers.Authorization.Scheme.Equals(authorizationType))
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "Authorization invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
 
             string encodedUsernamePassword = Request.Headers.Authorization.Parameter;
@@ -73,15 +73,16 @@ namespace Tryout_Respond.Controllers
 
             if (String.IsNullOrWhiteSpace(token))
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
 
-            object[] result = new object[3];
-            result[0] = token;
-            result[1] = misc.GetUserID(token);
-            result[2] = misc.IsAdmin(token);
+            object[] results = new object[4];
+            results[0] = token;
+            results[1] = misc.GetUserID(token);
+            results[2] = misc.GetUsername(results[1].ToString());
+            results[3] = misc.IsAdmin(token);
 
-            return Request.CreateResponse(HttpStatusCode.OK, result/*token + ":" + misc.IsAdmin(token)*/);
+            return Request.CreateResponse(HttpStatusCode.OK, results);
         }
 
         [HttpPost]
@@ -92,19 +93,19 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
 
                 if (String.IsNullOrWhiteSpace(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
                 }
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
                 }
 
                 if (!loginManager.DeleteToken(token))
@@ -128,7 +129,7 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
                 }
 
                 string oldToken = Request.Headers.GetValues("token").SingleOrDefault();
@@ -140,7 +141,7 @@ namespace Tryout_Respond.Controllers
 
                 if (!misc.IsTokenValid(oldToken))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
                 }
 
                 String newToken = loginManager.RefreshToken(oldToken);

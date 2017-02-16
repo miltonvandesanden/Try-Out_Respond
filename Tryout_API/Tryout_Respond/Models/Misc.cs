@@ -57,5 +57,10 @@ namespace Tryout_Respond.Models
         {
             return databaseConnection.GetUserIDWithToken(token);
         }
+
+        public string GetUsername(string userID)
+        {
+            return databaseConnection.GetUsername(userID);
+        }
     }
 }

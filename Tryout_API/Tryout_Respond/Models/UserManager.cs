@@ -29,13 +29,14 @@ namespace Tryout_Respond.Models
             return success;
         }
 
-        public String GetAccountInfo(string userID, string token)
+        public IList<string> GetAccountInfo(string userID, string token)
         {
-            string accountInfo = databaseConnection.GetUsername(userID);
+            IList<string> accountInfo = new List<string>();
+            accountInfo.Add(databaseConnection.GetUsername(userID));
 
             if (databaseConnection.IsAccountOwnerByToken(userID, token))
             {
-                accountInfo += databaseConnection.GetPasswordByUserID(userID);
+                accountInfo.Add(databaseConnection.GetPasswordByUserID(userID));
             }
 
             return accountInfo;
@@ -49,6 +50,16 @@ namespace Tryout_Respond.Models
         public IList<object[]> GetUserIDs()
         {
             return databaseConnection.GetUserIDs();
+        }
+
+        public IList<object[]> GetAccounts()
+        {
+            return databaseConnection.GetAccounts();
+        }
+
+        public bool SetUsername(string token, string username)
+        {
+            return databaseConnection.SetUsername(token, username);
         }
     }
 }

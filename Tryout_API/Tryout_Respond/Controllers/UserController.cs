@@ -16,14 +16,14 @@ namespace Tryout_Respond.Controllers
         private Misc misc = new Misc();
 
         [HttpGet]
-        //[Route("")]
+        [Route("")]
         public HttpResponseMessage Get/*Accounts*/()
         {
             try
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
@@ -33,20 +33,12 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                if (!misc.IsTokenValid(token) || !misc.IsAdmin(token))
+                if (!misc.IsTokenValid(token)/* || !misc.IsAdmin(token)*/)
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
                 }
 
-                var userInfo = String.Empty;
-
-                foreach (object[] userID in userManager.GetUserIDs())
-                {
-                    userInfo += userManager.GetAccountInfo(userID[0].ToString(), token);
-                    userInfo += Environment.NewLine;
-                }
-
-                return Request.CreateResponse(HttpStatusCode.OK, userInfo);
+                return Request.CreateResponse(HttpStatusCode.OK, userManager.GetAccounts().ToArray());
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -62,7 +54,7 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
@@ -74,17 +66,17 @@ namespace Tryout_Respond.Controllers
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
                 }
 
-                string ownAccountInfo = userManager.GetAccountInfo(userID, token);
+                IList<string> ownAccountInfo = userManager.GetAccountInfo(userID, token);
 
-                if (String.IsNullOrWhiteSpace(ownAccountInfo))
+                /*if (String.IsNullOrWhiteSpace(ownAccountInfo))
                 {
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
-                }
+                }*/
 
-                return Request.CreateResponse(HttpStatusCode.OK, ownAccountInfo);
+                return Request.CreateResponse(HttpStatusCode.OK, ownAccountInfo.ToArray());
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -100,7 +92,7 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
                 }
 
                 string token = Request.Headers.GetValues("token").FirstOrDefault();
@@ -110,9 +102,14 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                if (!misc.IsTokenValid(token) || !misc.IsAdmin(token) || !misc.AccountExistsUserID(userID))
+                if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                }
+
+                if(!misc.IsAdmin(token) || !misc.AccountExistsUserID(userID))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "no access rights");
                 }
 
                 var isAdmin = true;
@@ -131,14 +128,72 @@ namespace Tryout_Respond.Controllers
         }
 
         [HttpPost]
+        [Route("{userID}/changeUsername")]
+        public HttpResponseMessage ChangeUsername(string userID)
+        {
+            try
+            {
+                if (!Request.Headers.GetValues("token").Any())
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                }
+
+                if (!Request.Headers.GetValues("newUsername").Any())
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                }
+
+                string token = Request.Headers.GetValues("token").SingleOrDefault();
+                string newUsername = Request.Headers.GetValues("newUsername").SingleOrDefault();
+
+                if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(newUsername))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                }
+
+                if (!misc.IsTokenValid(token))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                }
+
+                if (!misc.IsAccountOwner(token, userID))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "access forbidden");
+                }
+
+                if(misc.AccountExistsUsername(newUsername))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "username in use");
+                }
+
+                if (!userManager.SetUsername(token, newUsername))
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, "username change failed");
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, newUsername);
+
+            }
+            catch (InvalidOperationException invalidOperationsException)
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+            }
+        }
+
+        [HttpPost]
         [Route("{userID}/changePassword")]
         public HttpResponseMessage ChangePassword(string userID)
         {
             try
             {
-                if (!Request.Headers.GetValues("token").Any() || !Request.Headers.GetValues("newPassword").Any())
+                if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                }
+
+                if (!Request.Headers.GetValues("newPassword").Any())
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
@@ -146,17 +201,22 @@ namespace Tryout_Respond.Controllers
 
                 if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(unencryptedNewPassword))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
                 }
 
-                if (!misc.IsTokenValid(token) || !misc.IsAccountOwner(token, userID))
+                if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                }
+
+                if(!misc.IsAccountOwner(token, userID))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, "no access rights");
                 }
 
                 if (!userManager.ChangePassword(token, userID, unencryptedNewPassword))
                 {
-                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
+                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, "failed");
                 }
 
                 return Request.CreateResponse(HttpStatusCode.OK, unencryptedNewPassword);

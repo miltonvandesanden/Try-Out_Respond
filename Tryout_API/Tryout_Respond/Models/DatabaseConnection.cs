@@ -572,33 +572,100 @@ namespace Tryout_Respond
 
         public IList<object[]> GetUserIDs()
         {
-            sqlConnection.Open();
+            IList<object[]> userIDs = null;
 
-            SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users", sqlConnection);
-            sqlCommand.Prepare();
+            try
+            {
+                sqlConnection.Open();
 
-            IList<object[]> results = RunQuery(sqlCommand);
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users", sqlConnection);
+                sqlCommand.Prepare();
 
-            sqlConnection.Close();
+                IList<object[]> results = RunQuery(sqlCommand);
 
-            return results;
+                sqlConnection.Close();
+
+                return results;
+            }
+            catch (Exception exception)
+            {
+                return userIDs = null;
+            }
         }
 
         public string GetUserIDWithToken(string token)
         {
-            sqlConnection.Open();
+            var userID = String.Empty;
 
-            SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE token=@token", sqlConnection);
-            sqlCommand.Parameters.AddWithValue("@token", token);
-            sqlCommand.Parameters["@token"].DbType = DbType.String;
-            sqlCommand.Parameters["@token"].Size = 1073741823;
-            sqlCommand.Prepare();
+            try
+            {
+                sqlConnection.Open();
 
-            string userID = RunQuery(sqlCommand).First().First().ToString();
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
 
-            sqlConnection.Close();
+                userID = RunQuery(sqlCommand).First().First().ToString();
 
-            return userID;
+                sqlConnection.Close();
+
+                return userID;
+            }
+            catch (Exception exception)
+            {
+                return userID = String.Empty;
+            }
+        }
+
+        public IList<object[]> GetAccounts()
+        {
+            IList<object[]> accounts = new List<object[]>();
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username FROM Users", sqlConnection);
+                sqlCommand.Prepare();
+
+                accounts = RunQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return accounts;
+            }
+            catch (Exception exception)
+            {
+                return accounts = new List<object[]>();
+            }
+        }
+
+        public bool SetUsername(string token, string username)
+        {
+            var success = false;
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("UPDATE Users SET username WHERE token=@token", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@token", token);
+                sqlCommand.Parameters["@token"].DbType = DbType.String;
+                sqlCommand.Parameters["@token"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                success = RunNonQuery(sqlCommand);
+
+                sqlConnection.Close();
+
+                return success;
+            }
+            catch (Exception exception)
+            {
+                return success = false;
+            }
         }
     }
 }
