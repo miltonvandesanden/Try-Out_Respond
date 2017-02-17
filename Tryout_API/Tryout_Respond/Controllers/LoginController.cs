@@ -12,10 +12,18 @@ namespace Tryout_Respond.Controllers
     [RoutePrefix("api/login")]
     public class LoginController : ApiController
     {
-        private const string authorizationType = "Basic";
-        private LoginManager loginManager = new LoginManager();
-        private UserManager userManager = new UserManager();
-        private Misc misc = new Misc();
+        private DatabaseConnection databaseConnection;
+        private Misc misc;
+        private UserManager userManager;
+        private LoginManager loginManager;
+
+        public LoginController()
+        {
+            databaseConnection = new DatabaseConnection();
+            misc = new Misc(databaseConnection);
+            userManager = new UserManager(databaseConnection, misc);
+            loginManager = new LoginManager(databaseConnection, userManager, misc);
+        }
 
         [HttpPost]
         [Route("register")]
@@ -55,7 +63,7 @@ namespace Tryout_Respond.Controllers
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
 
-            if (!Request.Headers.Authorization.Scheme.Equals(authorizationType))
+            if (!Request.Headers.Authorization.Scheme.Equals(Constants.authorizationType))
             {
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
@@ -78,9 +86,9 @@ namespace Tryout_Respond.Controllers
 
             object[] results = new object[4];
             results[0] = token;
-            results[1] = misc.GetUserID(token);
+            /*results[1] = misc.GetUserID(token);
             results[2] = misc.GetUsername(results[1].ToString());
-            results[3] = misc.IsAdmin(token);
+            results[3] = misc.IsAdmin(token);*/
 
             return Request.CreateResponse(HttpStatusCode.OK, results);
         }
@@ -108,7 +116,7 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
                 }
 
-                if (!loginManager.DeleteToken(token))
+                if (!misc.DeleteToken(token))
                 {
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
                 }

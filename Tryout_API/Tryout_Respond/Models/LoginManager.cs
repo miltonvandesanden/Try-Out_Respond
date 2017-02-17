@@ -10,8 +10,16 @@ namespace Tryout_Respond.Models
 {
     public class LoginManager
     {
-        private DatabaseConnection databaseConnection = new DatabaseConnection();
-        private Misc misc = new Misc();
+        private DatabaseConnection databaseConnection;
+        private UserManager userManager;
+        private Misc misc;
+
+        public LoginManager(DatabaseConnection databaseConnection, UserManager userManager, Misc misc)
+        {
+            this.databaseConnection = databaseConnection;
+            this.userManager = userManager;
+            this.misc = misc;
+        }
 
         public string Authenticate(string username, string unencryptedPassword)
         {
@@ -29,7 +37,8 @@ namespace Tryout_Respond.Models
 
             var passwordHash = misc.HashPassword(unencryptedPassword);
 
-            if (!databaseConnection.IsAccountOwnerCredentials(username, passwordHash))
+            //if (!databaseConnection.IsAccountOwnerCredentials(username, passwordHash))
+            if(databaseConnection.GetUser(username, passwordHash) == null)
             {
                 return token;
             }
@@ -54,7 +63,8 @@ namespace Tryout_Respond.Models
                 return passwordHash;
             }
 
-            if (misc.AccountExistsUsername(username))
+            //if (misc.AccountExistsUsername(username))
+            if(userManager.GetUser(username) != null)
             {
                 return passwordHash;
             }
@@ -62,7 +72,7 @@ namespace Tryout_Respond.Models
             var unencryptedPassword = Guid.NewGuid().ToString().Replace("-", "").Substring(0, Constants.MAXIMUMPASSWORDLENGTH);
             passwordHash = misc.HashPassword(unencryptedPassword);
 
-            string userID = misc.GenerateUserID();
+            string userID = GenerateUserID();
 
             var isAdmin = false;
             if (!databaseConnection.InsertUser(userID, username, passwordHash, isAdmin = false))
@@ -86,9 +96,16 @@ namespace Tryout_Respond.Models
             return newToken;
         }
 
-        public bool DeleteToken(string token)
+        public string GenerateUserID()
         {
-            return databaseConnection.DeleteToken(token);
+            var userID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 3);
+
+            if (databaseConnection.GetUserByUserID(userID) != null)
+            {
+                userID = GenerateUserID();
+            }
+
+            return userID;
         }
     }
 }

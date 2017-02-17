@@ -10,5 +10,6 @@ namespace Tryout_Respond.Models
         public static int MINIMALPASSWORDLENGTH = 8;
         public static int MAXIMUMPASSWORDLENGTH = 15;
         public static int TOKENLIFETIME = 20; //minutes
+        public static string authorizationType = "Basic";
     }
 }

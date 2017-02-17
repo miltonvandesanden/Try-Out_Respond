@@ -7,9 +7,14 @@ namespace Tryout_Respond.Models
 {
     public class UserManager
     {
-        private DatabaseConnection databaseConnection = new DatabaseConnection();
-        private Misc misc = new Misc();
-        private LoginManager loginManager = new LoginManager();
+        private DatabaseConnection databaseConnection;
+        private Misc misc;
+
+        public UserManager(DatabaseConnection databaseConnection, Misc misc)
+        {
+            this.databaseConnection = databaseConnection;
+            this.misc = misc;
+        }
 
         public bool ChangePassword(string token, string userID, string unencryptedNewPassword)
         {
@@ -24,22 +29,24 @@ namespace Tryout_Respond.Models
 
             success = databaseConnection.ChangePassword(userID, passwordHash);
 
-            loginManager.DeleteToken(token);
+            misc.DeleteToken(token);
 
             return success;
         }
 
-        public IList<string> GetAccountInfo(string userID, string token)
+        public User GetUser(string username)
         {
-            IList<string> accountInfo = new List<string>();
-            accountInfo.Add(databaseConnection.GetUsername(userID));
+            return databaseConnection.GetUser(username);
+        }
+        
+        public User GetUserByID(string userID)
+        {
+            return databaseConnection.GetUserByUserID(userID);
+        }
 
-            if (databaseConnection.IsAccountOwnerByToken(userID, token))
-            {
-                accountInfo.Add(databaseConnection.GetPasswordByUserID(userID));
-            }
-
-            return accountInfo;
+        public User GetUserByIDWithToken(string userID)
+        {
+            return databaseConnection.GetUserByUserIDWithToken(userID);
         }
 
         public bool MakeAdmin(string userID, bool isAdmin)
@@ -47,14 +54,9 @@ namespace Tryout_Respond.Models
             return databaseConnection.MakeAdmin(userID, isAdmin);
         }
 
-        public IList<object[]> GetUserIDs()
+        public IList<User> GetAccounts()
         {
-            return databaseConnection.GetUserIDs();
-        }
-
-        public IList<object[]> GetAccounts()
-        {
-            return databaseConnection.GetAccounts();
+            return databaseConnection.GetUsers();
         }
 
         public bool SetUsername(string token, string username)
