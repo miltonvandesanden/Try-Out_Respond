@@ -50,9 +50,12 @@ namespace Tryout_Respond.Controllers
 
                 var users = userManager.GetAccounts();
 
-                string result = JsonConvert.SerializeObject(users);
+                string JsonAllUsers = JsonConvert.SerializeObject(new { users = users});
 
-                return Request.CreateResponse(HttpStatusCode.OK, result);
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(JsonAllUsers);
+
+                return response;
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -83,9 +86,13 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                string json = JsonConvert.SerializeObject(userManager.GetUserByID(userID));
+                string JsonUser = JsonConvert.SerializeObject(new { user = userManager.GetUserByID(userID) });
 
-                return Request.CreateResponse(HttpStatusCode.OK, json);
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(JsonUser);
+
+                return response;
+                
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -134,9 +141,11 @@ namespace Tryout_Respond.Controllers
                 {
                     return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
+                string JsonUserID = JsonConvert.SerializeObject(new { userID = userID });
+                string JsonText = JsonConvert.SerializeObject(new { text = " set to admin" });
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(userID + " set to admin");
+                response.Content = new StringContent(JsonUserID + JsonText);
 
                 return response;
 
@@ -202,9 +211,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, JsonConvert.SerializeObject("username change failed"));
                 }
 
+                string JsonText = JsonConvert.SerializeObject(new { text = "Username veranderd" });
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent("Username veranderd");
+                response.Content = new StringContent(JsonText);
 
                 return response;
             }
@@ -255,8 +265,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, JsonConvert.SerializeObject("change password failed"));
                 }
 
+                string JsonPassword = JsonConvert.SerializeObject(new { password = unencryptedNewPassword });
+
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(JsonConvert.SerializeObject(unencryptedNewPassword);
+                response.Content = new StringContent(JsonConvert.SerializeObject(JsonPassword);
 
                 return response;
 
