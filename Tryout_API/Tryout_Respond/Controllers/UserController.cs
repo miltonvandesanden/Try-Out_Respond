@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -11,9 +12,18 @@ namespace Tryout_Respond.Controllers
     [RoutePrefix("api/users")]
     public class UserController : ApiController
     {
-        private LoginManager loginManager = new LoginManager();
-        private UserManager userManager = new UserManager();
-        private Misc misc = new Misc();
+        private DatabaseConnection databaseConnection;
+        private Misc misc;
+        private UserManager userManager;
+        private LoginManager loginManager;
+
+        public UserController()
+        {
+            databaseConnection = new DatabaseConnection();
+            misc = new Misc(databaseConnection);
+            userManager = new UserManager(databaseConnection, misc);
+            loginManager = new LoginManager(databaseConnection, userManager, misc);
+        }
 
         [HttpGet]
         [Route("")]
@@ -23,26 +33,30 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("not logged in"));
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
 
                 if (String.IsNullOrWhiteSpace(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
-                if (!misc.IsTokenValid(token)/* || !misc.IsAdmin(token)*/)
+                if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, userManager.GetAccounts().ToArray());
+                var users = userManager.GetAccounts();
+
+                string result = JsonConvert.SerializeObject(users);
+
+                return Request.CreateResponse(HttpStatusCode.OK, result);
             }
             catch (InvalidOperationException invalidOperationException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
             }
         }
 
@@ -54,33 +68,28 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("not logged in"));
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
 
                 if (String.IsNullOrWhiteSpace(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                IList<string> ownAccountInfo = userManager.GetAccountInfo(userID, token);
+                string json = JsonConvert.SerializeObject(userManager.GetUserByID(userID));
 
-                /*if (String.IsNullOrWhiteSpace(ownAccountInfo))
-                {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
-                }*/
-
-                return Request.CreateResponse(HttpStatusCode.OK, ownAccountInfo.ToArray());
+                return Request.CreateResponse(HttpStatusCode.OK, json);
             }
             catch (InvalidOperationException invalidOperationException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
             }
         }
 
@@ -92,41 +101,49 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("not logged in"));
                 }
 
                 string token = Request.Headers.GetValues("token").FirstOrDefault();
 
                 if (String.IsNullOrWhiteSpace(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                if(!misc.IsAdmin(token) || !misc.AccountExistsUserID(userID))
+                User user = userManager.GetUser(userID);
+
+                if(user == null)
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "no access rights");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("no access rights"));
+                }
+
+                if(!user.isAdmin)
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("no access rights"));
                 }
 
                 var isAdmin = true;
 
                 if (!userManager.MakeAdmin(userID, isAdmin))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
                 response.Content = new StringContent(userID + " set to admin");
 
                 return response;
+
             }
             catch (InvalidOperationException invalidOperationException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
             }
         }
 
@@ -138,12 +155,12 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("not logged in"));
                 }
 
                 if (!Request.Headers.GetValues("newUsername").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
@@ -151,37 +168,49 @@ namespace Tryout_Respond.Controllers
 
                 if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(newUsername))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
                 }
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                if (!misc.IsAccountOwner(token, userID))
+                User user = userManager.GetUserByIDWithToken(userID);
+
+                if(user == null)
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "access forbidden");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("invalid link"));
                 }
 
-                if(misc.AccountExistsUsername(newUsername))
+                //if (!misc.IsAccountOwner(token, userID))
+                if(user.token == token)
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "username in use");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("no access rights"));
+                }
+
+                //if(misc.AccountExistsUsername(newUsername))
+
+                User user2 = userManager.GetUser(newUsername);
+                if(user == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("username in use"));
                 }
 
                 if (!userManager.SetUsername(token, newUsername))
                 {
-                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, "username change failed");
+                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, JsonConvert.SerializeObject("username change failed"));
                 }
 
+
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(newUsername);
+                response.Content = new StringContent("Username veranderd");
 
                 return response;
             }
             catch (InvalidOperationException invalidOperationsException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
             }
         }
 
@@ -193,12 +222,12 @@ namespace Tryout_Respond.Controllers
             {
                 if (!Request.Headers.GetValues("token").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "not logged in");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("not logged in"));
                 }
 
                 if (!Request.Headers.GetValues("newPassword").Any())
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("invalid credentials"));
                 }
 
                 string token = Request.Headers.GetValues("token").SingleOrDefault();
@@ -206,32 +235,35 @@ namespace Tryout_Respond.Controllers
 
                 if (String.IsNullOrWhiteSpace(token) || String.IsNullOrWhiteSpace(unencryptedNewPassword))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("invalid credentials"));
                 }
 
                 if (!misc.IsTokenValid(token))
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "session expired");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("session expired"));
                 }
 
-                if(!misc.IsAccountOwner(token, userID))
+                //if(!misc.IsAccountOwner(token, userID))
+                User user = userManager.GetUserByIDWithToken(userID);
+                if(user.token != token)
                 {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, "no access rights");
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("no access rights"));
                 }
 
                 if (!userManager.ChangePassword(token, userID, unencryptedNewPassword))
                 {
-                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, "failed");
+                    return Request.CreateResponse(HttpStatusCode.NotAcceptable, JsonConvert.SerializeObject("change password failed"));
                 }
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(unencryptedNewPassword);
+                response.Content = new StringContent(JsonConvert.SerializeObject(unencryptedNewPassword);
 
                 return response;
+
             }
             catch (InvalidOperationException invalidOperationException)
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
+                return Request.CreateResponse(HttpStatusCode.Forbidden, JsonConvert.SerializeObject("credentials invalid"));
             }
         }
     }

@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
+using Tryout_Respond.Models;
 
 namespace Tryout_Respond
 {
@@ -111,199 +112,6 @@ namespace Tryout_Respond
             }
         }
 
-        public bool IsAccountOwnerCredentials(string username, string passwordHash)
-        {
-            var isAccountOwner = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username AND passwordHash=@passwordHash", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@username", username);
-                sqlCommand.Parameters["@username"].DbType = DbType.String;
-                sqlCommand.Parameters["@username"].Size = 1073741823;
-                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
-                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
-                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                isAccountOwner = RunQuery(sqlCommand).Any();
-
-                sqlConnection.Close();
-
-                return isAccountOwner;
-            }
-            catch (Exception exception)
-            {
-                return isAccountOwner = false;
-            }
-        }
-
-        public bool IsAccountOwnerToken(string token, string userID)
-        {
-            var isAccountOwner = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID AND token=@token", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@username"].DbType = DbType.String;
-                sqlCommand.Parameters["@username"].Size = 6;
-                sqlCommand.Parameters.AddWithValue("@token", token);
-                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
-                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                isAccountOwner = RunQuery(sqlCommand).Any();
-
-                sqlConnection.Close();
-
-                return isAccountOwner;
-            }
-            catch (Exception exception)
-            {
-                return isAccountOwner = false;
-            }
-        }
-
-        public bool IsAccountOwnerByToken(string userID, string token)
-        {
-            var isAccountOwner = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID AND token=@token", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@userID"].DbType = DbType.String;
-                sqlCommand.Parameters["@userID"].Size = 6;
-                sqlCommand.Parameters.AddWithValue("@token", token);
-                sqlCommand.Parameters["@token"].DbType = DbType.String;
-                sqlCommand.Parameters["@token"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                isAccountOwner = RunQuery(sqlCommand).Any();
-
-                sqlConnection.Close();
-
-                return isAccountOwner;
-            }
-            catch (Exception exception)
-            {
-                return isAccountOwner = false;
-            }
-        }
-
-        public string GetUserID(string username)
-        {
-            var userID = String.Empty;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@username", username);
-                sqlCommand.Parameters["@username"].DbType = DbType.String;
-                sqlCommand.Parameters["@username"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                userID = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
-
-                sqlConnection.Close();
-
-                return userID;
-            }
-            catch (Exception exception)
-            {
-                return userID = String.Empty;
-            }
-        }
-
-        public string GetUsername(string userID)
-        {
-            var username = String.Empty;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT username FROM Users WHERE userID=@userID", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@userID"].DbType = DbType.String;
-                sqlCommand.Parameters["@userID"].Size = 6;
-                sqlCommand.Prepare();
-
-                username = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
-
-                sqlConnection.Close();
-
-                return username;
-            }
-            catch (Exception exception)
-            {
-                return username = String.Empty;
-            }
-
-        }
-
-
-        public bool AccountExistsUserID(string userID)
-        {
-            var accountExists = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE userID=@userID", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@userID"].DbType = DbType.String;
-                sqlCommand.Parameters["@userID"].Size = 6;
-                sqlCommand.Prepare();
-
-                accountExists = RunQuery(sqlCommand).Any();
-
-                sqlConnection.Close();
-
-                return accountExists;
-            }
-            catch (Exception exception)
-            {
-                return accountExists = false;
-            }
-        }
-
-        public bool AccountExistsUsername(string username)
-        {
-            var accountExists = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE username=@username", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@username", username);
-                sqlCommand.Parameters["@username"].DbType = DbType.String;
-                sqlCommand.Parameters["@username"].Size = 30;
-                sqlCommand.Prepare();
-
-                accountExists = RunQuery(sqlCommand).Any();
-
-                sqlConnection.Close();
-
-                return accountExists;
-            }
-            catch (Exception exception)
-            {
-                return accountExists = false;
-            }
-        }
-
         public bool SetToken(string token, DateTime expirationDate, string username)
         {
             var successfull = false;
@@ -332,6 +140,15 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch(Exception exception2)
+                {
+
+                }
+
                 return successfull = false;
             }
         }
@@ -364,6 +181,15 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return successfull = false;
             }
         }
@@ -399,6 +225,15 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return successfull = false;
             }
         }
@@ -428,33 +263,16 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return isValid = false;
-            }
-        }
-
-        public string GetPasswordByUserID(string userID)
-        {
-            var password = String.Empty;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT passwordHash FROM Users WHERE userID=@userID", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@userID", userID);
-                sqlCommand.Parameters["@userID"].DbType = DbType.String;
-                sqlCommand.Parameters["@userID"].Size = 6;
-                sqlCommand.Prepare();
-
-                password = RunQuery(sqlCommand).FirstOrDefault().FirstOrDefault().ToString();
-
-                sqlConnection.Close();
-
-                return password;
-            }
-            catch (Exception exception)
-            {
-                return password = String.Empty;
             }
         }
 
@@ -480,6 +298,15 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return success = false;
             }
         }
@@ -509,36 +336,16 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
-                return success = false;
-            }
-        }
-
-        public bool IsAdmin(string token)
-        {
-            var isAdmin = false;
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT isAdmin FROM Users WHERE token=@token", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@token", token);
-                sqlCommand.Parameters["@token"].DbType = DbType.String;
-                sqlCommand.Parameters["@token"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                foreach (object[] value in RunQuery(sqlCommand))
+                try
                 {
-                    isAdmin = (bool)value[0];
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
                 }
 
-                sqlConnection.Close();
-
-                return isAdmin;
-            }
-            catch (Exception exception)
-            {
-                return isAdmin = false;
+                return success = false;
             }
         }
 
@@ -566,79 +373,58 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return success = false;
             }
         }
 
-        public IList<object[]> GetUserIDs()
+        public IList<User> GetUsers()
         {
-            IList<object[]> userIDs = null;
+            IList<User> users = new List<User>();
 
             try
             {
                 sqlConnection.Open();
 
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users", sqlConnection);
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username, isAdmin FROM Users", sqlConnection);
                 sqlCommand.Prepare();
 
-                IList<object[]> results = RunQuery(sqlCommand);
+                //accounts = RunQuery(sqlCommand);
+
+                foreach(object[] result in RunQuery(sqlCommand))
+                {
+                    User user = new User();
+                    user.userID = result[0].ToString();
+                    user.username = result[1].ToString();
+                    user.isAdmin = (bool) result[2];
+
+                    users.Add(user);
+                }
 
                 sqlConnection.Close();
 
-                return results;
+                return users;
             }
             catch (Exception exception)
             {
-                return userIDs = null;
-            }
-        }
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
 
-        public string GetUserIDWithToken(string token)
-        {
-            var userID = String.Empty;
+                }
 
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID FROM Users WHERE token=@token", sqlConnection);
-                sqlCommand.Parameters.AddWithValue("@token", token);
-                sqlCommand.Parameters["@token"].DbType = DbType.String;
-                sqlCommand.Parameters["@token"].Size = 1073741823;
-                sqlCommand.Prepare();
-
-                userID = RunQuery(sqlCommand).First().First().ToString();
-
-                sqlConnection.Close();
-
-                return userID;
-            }
-            catch (Exception exception)
-            {
-                return userID = String.Empty;
-            }
-        }
-
-        public IList<object[]> GetAccounts()
-        {
-            IList<object[]> accounts = new List<object[]>();
-
-            try
-            {
-                sqlConnection.Open();
-
-                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username FROM Users", sqlConnection);
-                sqlCommand.Prepare();
-
-                accounts = RunQuery(sqlCommand);
-
-                sqlConnection.Close();
-
-                return accounts;
-            }
-            catch (Exception exception)
-            {
-                return accounts = new List<object[]>();
+                return users = new List<User>();
             }
         }
 
@@ -664,7 +450,180 @@ namespace Tryout_Respond
             }
             catch (Exception exception)
             {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
                 return success = false;
+            }
+        }
+
+        public User GetUser(string username)
+        {
+            User user = new User();
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username, isAdmin FROM Users WHERE username=@username", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                //success = RunNonQuery(sqlCommand);
+                object[] result = RunQuery(sqlCommand).First();
+
+                sqlConnection.Close();
+
+                user.userID = result[0].ToString();
+                user.username = result[1].ToString();
+                user.isAdmin = (bool) result[2];
+
+                return user;
+            }
+            catch (Exception exception)
+            {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
+                return user = null;
+            }
+        }
+
+        public User GetUserByUserID(string userID)
+        {
+            User user = new User();
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username, isAdmin FROM Users WHERE userID=@userID", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Prepare();
+
+                object[] result = RunQuery(sqlCommand).First();
+
+                sqlConnection.Close();
+
+                user.userID = result[0].ToString();
+                user.username = result[1].ToString();
+                user.isAdmin = (bool)result[2];
+
+                return user;
+            }
+            catch (Exception exception)
+            {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
+                return user = null;
+            }
+        }
+
+        public User GetUserByUserIDWithToken(string userID)
+        {
+            User user = new User();
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username, isAdmin, token FROM Users WHERE userID=@userID", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@userID", userID);
+                sqlCommand.Parameters["@userID"].DbType = DbType.String;
+                sqlCommand.Parameters["@userID"].Size = 6;
+                sqlCommand.Prepare();
+
+                object[] result = RunQuery(sqlCommand).First();
+
+                sqlConnection.Close();
+
+                user.userID = result[0].ToString();
+                user.username = result[1].ToString();
+                user.isAdmin = (bool)result[2];
+                user.token = result[3].ToString();
+
+                return user;
+            }
+            catch (Exception exception)
+            {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
+                return user = null;
+            }
+        }
+
+
+        public User GetUser(string username, string passwordHash)
+        {
+            User user = new User();
+
+            try
+            {
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand("SELECT userID, username, isAdmin FROM Users WHERE username=@username AND passwordHash=@passwordHash", sqlConnection);
+                sqlCommand.Parameters.AddWithValue("@username", username);
+                sqlCommand.Parameters["@username"].DbType = DbType.String;
+                sqlCommand.Parameters["@username"].Size = 1073741823;
+                sqlCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
+                sqlCommand.Parameters["@passwordHash"].DbType = DbType.String;
+                sqlCommand.Parameters["@passwordHash"].Size = 1073741823;
+                sqlCommand.Prepare();
+
+                //success = RunNonQuery(sqlCommand);
+                object[] result = RunQuery(sqlCommand).FirstOrDefault();
+
+                sqlConnection.Close();
+
+                user.userID = result[0].ToString();
+                user.username = result[1].ToString();
+                user.isAdmin = (bool)result[2];
+
+                return user;
+
+            }
+            catch (Exception exception)
+            {
+                try
+                {
+                    sqlConnection.Close();
+                }
+                catch (Exception exception2)
+                {
+
+                }
+
+                return user = null;
             }
         }
     }
