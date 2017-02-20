@@ -356,3 +356,5 @@ C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\bi
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.csprojResolveAssemblyReference.cache
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.dll
 C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.pdb
+C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.Migrations.InitialCreate.resources
+C:\Users\Valentine\Documents\GitHub\Try-Out_Respond\Tryout_API\Tryout_Respond\obj\Debug\Tryout_Respond.csproj.GenerateResource.Cache

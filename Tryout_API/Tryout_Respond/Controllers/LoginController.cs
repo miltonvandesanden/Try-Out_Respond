@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Web.Helpers;
 using System.Web.Http;
 using Tryout_Respond.Models;
 
@@ -16,11 +18,11 @@ namespace Tryout_Respond.Controllers
         private LoginManager loginManager = new LoginManager();
         private UserManager userManager = new UserManager();
         private Misc misc = new Misc();
-
-        [HttpPost]
+        
+    [HttpPost]
         [Route("register")]
         public HttpResponseMessage Register()
-        {
+        { 
             try
             {
                 if (!Request.Headers.GetValues("username").Any())
@@ -38,7 +40,12 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, password);
+                string JsonPassword = JsonConvert.SerializeObject(new { password = password });
+    
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(JsonPassword);
+
+                return response;
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -76,13 +83,17 @@ namespace Tryout_Respond.Controllers
                 return Request.CreateResponse(HttpStatusCode.Forbidden, "invalid credentials");
             }
 
-            object[] results = new object[4];
-            results[0] = token;
-            results[1] = misc.GetUserID(token);
-            results[2] = misc.GetUsername(results[1].ToString());
-            results[3] = misc.IsAdmin(token);
+            string JsonPassword = JsonConvert.SerializeObject(new { password = password });
+            string JsonUsername = JsonConvert.SerializeObject(new { username = username});
+            string JsonToken = JsonConvert.SerializeObject(new { token = token });
+            string JsonIsAdmin = JsonConvert.SerializeObject(new { isAdmin = misc.IsAdmin(token) });
 
-            return Request.CreateResponse(HttpStatusCode.OK, results);
+            string content = JsonPassword + JsonUsername + JsonToken + JsonIsAdmin;
+
+            HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+            response.Content = new StringContent(content);
+
+            return response;
         }
 
         [HttpPost]
@@ -113,7 +124,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, "logout failed");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, "logged out");
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(" logged out");
+
+                return response;
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -151,7 +165,12 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, newToken);
+                string content = JsonConvert.SerializeObject(new { newToken = newToken });
+
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(content);
+
+                return response;
             }
             catch (InvalidOperationException invalidOperatonException)
             {

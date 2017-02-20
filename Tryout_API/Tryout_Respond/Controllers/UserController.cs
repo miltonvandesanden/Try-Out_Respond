@@ -119,7 +119,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.Forbidden, "credentials invalid");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, userID + " set to admin");
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(userID + " set to admin");
+
+                return response;
             }
             catch (InvalidOperationException invalidOperationException)
             {
@@ -171,8 +174,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, "username change failed");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, newUsername);
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(newUsername);
 
+                return response;
             }
             catch (InvalidOperationException invalidOperationsException)
             {
@@ -219,7 +224,10 @@ namespace Tryout_Respond.Controllers
                     return Request.CreateResponse(HttpStatusCode.NotAcceptable, "failed");
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, unencryptedNewPassword);
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StringContent(unencryptedNewPassword);
+
+                return response;
             }
             catch (InvalidOperationException invalidOperationException)
             {
